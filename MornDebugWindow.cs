@@ -8,10 +8,10 @@ namespace MornDebug
     {
         private Vector2 _scrollPosition;
 
-        [MenuItem("Tools/デバッグウィンドウ")]
+        [MenuItem("Tools/何でもデバッグ(MornDebugWindow)")]
         private static void Open()
         {
-            GetWindow<MornDebugWindow>("デバッグウインドウ");
+            GetWindow<MornDebugWindow>("何デバ");
         }
 
         private void OnEnable()
