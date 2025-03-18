@@ -17,14 +17,20 @@ namespace MornDebug
         {
             yield return ("セーブマネージャ", () =>
             {
+                var cachedEnabled = GUI.enabled;
+                GUI.enabled = !Application.isPlaying;
                 if (GUILayout.Button("PlayerPrefsをリセット"))
                 {
                     PlayerPrefs.DeleteAll();
                 }
+
+                GUI.enabled = cachedEnabled;
             });
 #if UNITY_EDITOR
             yield return ("リロード", () =>
             {
+                var cachedEnabled = GUI.enabled;
+                GUI.enabled = !Application.isPlaying;
                 using (new GUILayout.HorizontalScope())
                 {
                     if (GUILayout.Button("Reload Domain"))
@@ -39,10 +45,14 @@ namespace MornDebug
                         EditorSceneManager.LoadSceneInPlayMode(scene.path, opts);
                     }
                 }
+
+                GUI.enabled = cachedEnabled;
             });
 #endif
             yield return ("シーン一覧", () =>
             {
+                var cachedEnabled = GUI.enabled;
+                GUI.enabled = !Application.isPlaying;
                 foreach (var scene in EditorBuildSettings.scenes)
                 {
                     var sceneName = scene.path.Split('/').Last();
@@ -51,6 +61,8 @@ namespace MornDebug
                         EditorSceneManager.OpenScene(scene.path);
                     }
                 }
+
+                GUI.enabled = cachedEnabled;
             });
         }
     }
