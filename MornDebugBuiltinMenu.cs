@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using MornEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 #if UNITY_EDITOR
@@ -13,6 +13,29 @@ namespace MornDebug
     [CreateAssetMenu(fileName = nameof(MornDebugBuiltinMenu), menuName = "Morn/" + nameof(MornDebugBuiltinMenu))]
     public sealed class MornDebugBuiltinMenu : MornDebugInitialMenuBase
     {
+        private class SceneTree : MornEditorTreeBase<EditorBuildSettingsScene>
+        {
+            public SceneTree(string prefix) : base(prefix)
+            {
+            }
+
+            protected override string NodeToPath(EditorBuildSettingsScene node)
+            {
+                return node.path;
+            }
+
+            protected override void NodeOnGUI(EditorBuildSettingsScene node)
+            {
+                if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                {
+                    EditorSceneManager.OpenScene(node.path);
+                }
+            }
+        }
+
+        [SerializeField] private string _scenePathPrefix;
+        private SceneTree _tree;
+
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
             yield return ("セーブマネージャ", () =>
@@ -49,19 +72,17 @@ namespace MornDebug
                 GUI.enabled = cachedEnabled;
             });
 #endif
+            _tree = new SceneTree(_scenePathPrefix);
+            foreach (var scene in EditorBuildSettings.scenes)
+            {
+                _tree.Add(scene);
+            }
+
             yield return ("シーン一覧", () =>
             {
                 var cachedEnabled = GUI.enabled;
                 GUI.enabled = !Application.isPlaying;
-                foreach (var scene in EditorBuildSettings.scenes)
-                {
-                    var sceneName = scene.path.Split('/').Last();
-                    if (GUILayout.Button(sceneName))
-                    {
-                        EditorSceneManager.OpenScene(scene.path);
-                    }
-                }
-
+                _tree.OnGUI();
                 GUI.enabled = cachedEnabled;
             });
         }

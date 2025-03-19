@@ -1,7 +1,10 @@
 {
     "name": "MornDebug",
     "rootNamespace": "MornDebug",
-    "references": ["GUID:9fb3b15b1474476cbe64c6bd63468fb6"],
+    "references": [
+        "GUID:9fb3b15b1474476cbe64c6bd63468fb6",
+        "GUID:520891f70526d454fa74c098f96aaedd"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
