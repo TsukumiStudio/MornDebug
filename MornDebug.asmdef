@@ -2,8 +2,10 @@
     "name": "MornDebug",
     "rootNamespace": "MornDebug",
     "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:520891f70526d454fa74c098f96aaedd",
         "GUID:9fb3b15b1474476cbe64c6bd63468fb6",
-        "GUID:520891f70526d454fa74c098f96aaedd"
+        "GUID:4fec7dc6f4f634537a1d2d4164a3f6d3"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

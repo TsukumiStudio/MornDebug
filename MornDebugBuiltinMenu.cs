@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using MornEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -85,6 +87,49 @@ namespace MornDebug
                 _tree.OnGUI();
                 GUI.enabled = cachedEnabled;
             });
+            yield return ("git/便利系", () =>
+            {
+                var cachedEnabled = GUI.enabled;
+                GUI.enabled = !Application.isPlaying;
+                using (new GUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Submodule更新"))
+                    {
+                        UpdateSubmoduleAsync().Forget();
+                    }
+
+                    if (GUILayout.Button("差分全消し"))
+                    {
+                        DeleteDiffAsync().Forget();
+                    }
+                }
+
+                GUI.enabled = cachedEnabled;
+            });
+        }
+
+        private async UniTask UpdateSubmoduleAsync(CancellationToken ct = default)
+        {
+            var process = MornProcess.MornProcess.CreateAtAssets("git");
+            var stashName = $"{nameof(MornDebug)}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
+            await process.ExecuteAsync($"stash push -m \"{stashName}\"", ct);
+            await process.ExecuteAsync($"submodule foreach --recursive git stash push -m \"{stashName}\"", ct);
+            await process.ExecuteAsync("submodule deinit -f --all", ct);
+            await process.ExecuteAsync("submodule update --init --recursive", ct);
+            process.Dispose();
+            MornDebugGlobal.Log("submodule更新完了");
+        }
+
+        private async UniTask DeleteDiffAsync(CancellationToken ct = default)
+        {
+            var process = MornProcess.MornProcess.CreateAtAssets("git");
+            var stashName = $"{nameof(MornDebug)}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
+            await process.ExecuteAsync($"stash push -m \"{stashName}\"", ct);
+            await process.ExecuteAsync($"submodule foreach --recursive git stash push -m \"{stashName}\"", ct);
+            await process.ExecuteAsync("reset --hard HEAD", ct);
+            await process.ExecuteAsync("clean -fd", ct);
+            process.Dispose();
+            MornDebugGlobal.Log("差分全消し完了");
         }
     }
 }
