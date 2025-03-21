@@ -7,6 +7,7 @@ namespace MornDebug
 {
     public static class MornDebugCore
     {
+        private static readonly List<string> _menuKeys = new();
         private static readonly Dictionary<string, (Action, CancellationToken)> _menuItems = new();
 
         static MornDebugCore()
@@ -19,9 +20,10 @@ namespace MornDebug
 
         internal static IEnumerable<(string, Action, CancellationToken)> GetValues()
         {
-            foreach (var pair in _menuItems)
+            foreach (var key in _menuKeys)
             {
-                yield return (pair.Key, pair.Value.Item1, pair.Value.Item2);
+                var pair = _menuItems[key];
+                yield return (key, pair.Item1, pair.Item2);
             }
         }
 
@@ -45,12 +47,27 @@ namespace MornDebug
 
         public static void RegisterGUI(string key, Action action, CancellationToken ct = default)
         {
+            if (_menuItems.ContainsKey(key))
+            {
+                MornDebugGlobal.LogWarning($"キーが重複しているので登録処理をスキップします:{key}");
+                return;
+            }
+
             _menuItems[key] = (action, ct);
+            _menuKeys.Add(key);
+            _menuKeys.Sort();
         }
 
         public static void UnregisterGUI(string key)
         {
+            if (!_menuItems.ContainsKey(key))
+            {
+                MornDebugGlobal.LogWarning($"キーが見つからないので削除処理をスキップします:{key}");
+                return;
+            }
+
             _menuItems.Remove(key);
+            _menuKeys.Remove(key);
         }
     }
 }
