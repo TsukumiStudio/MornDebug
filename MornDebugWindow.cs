@@ -38,9 +38,14 @@ namespace MornDebug
                 _scrollPosition = scroll.scrollPosition;
                 using (new GUILayout.HorizontalScope())
                 {
-                    var canBack = _currentPath.Length > 0;
+                    var canBack = !string.IsNullOrEmpty(_currentPath) && _currentPath.Length > 0;
                     var cachedEnabled = GUI.enabled;
                     GUI.enabled = canBack;
+                    if (GUILayout.Button("Root", GUILayout.Width(50)))
+                    {
+                        _currentPath = string.Empty;
+                    }
+
                     if (GUILayout.Button("Back", GUILayout.Width(50)))
                     {
                         var index = _currentPath.LastIndexOf('/');
@@ -66,7 +71,6 @@ namespace MornDebug
                     if (string.IsNullOrEmpty(_currentPath) || key.StartsWith(_currentPath))
                     {
                         anyItem = true;
-                        
                         var relativePath = key.Substring(_currentPath.Length);
                         if (relativePath.Contains('/'))
                         {

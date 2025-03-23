@@ -13,7 +13,7 @@ using UnityEditor.SceneManagement;
 namespace MornDebug
 {
     [CreateAssetMenu(fileName = nameof(MornDebugBuiltinMenu), menuName = "Morn/" + nameof(MornDebugBuiltinMenu))]
-    public sealed class MornDebugBuiltinMenu : MornDebugInitialMenuBase
+    public sealed class MornDebugBuiltinMenu : MornDebugMenuBase
     {
         private class SceneTree : MornEditorTreeBase<EditorBuildSettingsScene>
         {

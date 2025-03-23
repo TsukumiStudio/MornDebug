@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MornDebug
 {
-    public abstract class MornDebugInitialMenuBase : ScriptableObject
+    public abstract class MornDebugMenuBase : ScriptableObject
     {
         public abstract IEnumerable<(string key, Action action)> GetMenuItems();
     }
