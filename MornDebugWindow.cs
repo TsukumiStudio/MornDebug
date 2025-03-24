@@ -65,6 +65,11 @@ namespace MornDebug
                     GUI.enabled = cachedEnabled;
                 }
 
+                if (_currentPath == null)
+                {
+                    _currentPath = string.Empty;
+                }
+
                 var anyItem = false;
                 foreach (var (key, action, _) in MornDebugCore.GetValues())
                 {
