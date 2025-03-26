@@ -15,6 +15,7 @@ namespace MornDebug
     [CreateAssetMenu(fileName = nameof(MornDebugBuiltinMenu), menuName = "Morn/" + nameof(MornDebugBuiltinMenu))]
     public sealed class MornDebugBuiltinMenu : MornDebugMenuBase
     {
+#if UNITY_EDITOR
         private class SceneTree : MornEditorTreeBase<EditorBuildSettingsScene>
         {
             public SceneTree(string prefix) : base(prefix)
@@ -26,17 +27,15 @@ namespace MornDebug
                 return node.path;
             }
 
-            protected override void NodeOnGUI(EditorBuildSettingsScene node)
+            protected override void NodeClicked(EditorBuildSettingsScene node)
             {
-                if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
-                {
-                    EditorSceneManager.OpenScene(node.path);
-                }
+                AssetDatabase.OpenAsset(AssetDatabase.LoadAssetAtPath<SceneAsset>(node.path));
             }
         }
 
         [SerializeField] private string _scenePathPrefix;
         private SceneTree _tree;
+#endif
 
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
@@ -73,7 +72,6 @@ namespace MornDebug
 
                 GUI.enabled = cachedEnabled;
             });
-#endif
             _tree = new SceneTree(_scenePathPrefix);
             foreach (var scene in EditorBuildSettings.scenes)
             {
@@ -87,6 +85,8 @@ namespace MornDebug
                 _tree.OnGUI();
                 GUI.enabled = cachedEnabled;
             });
+#endif
+
             yield return ("git/便利系", () =>
             {
                 var cachedEnabled = GUI.enabled;
