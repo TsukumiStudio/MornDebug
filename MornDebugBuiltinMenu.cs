@@ -59,14 +59,12 @@ namespace MornDebug
                 {
                     if (GUILayout.Button("Reload Domain"))
                     {
-                        EditorUtility.RequestScriptReload();
+                        ReloadDomain();
                     }
 
                     if (GUILayout.Button("Reload Scene"))
                     {
-                        var scene = SceneManager.GetActiveScene();
-                        var opts = new LoadSceneParameters();
-                        EditorSceneManager.LoadSceneInPlayMode(scene.path, opts);
+                        ReloadScene();
                     }
                 }
 
@@ -86,7 +84,6 @@ namespace MornDebug
                 GUI.enabled = cachedEnabled;
             });
 #endif
-
             yield return ("git/便利系", () =>
             {
                 var cachedEnabled = GUI.enabled;
@@ -130,6 +127,20 @@ namespace MornDebug
             await process.ExecuteAsync("clean -fd", ct);
             process.Dispose();
             MornDebugGlobal.Log("差分全消し完了");
+        }
+
+        [MenuItem("Tools/Reload Domain")]
+        private static void ReloadDomain()
+        {
+            EditorUtility.RequestScriptReload();
+        }
+
+        [MenuItem("Tools/Reload Scene")]
+        private static void ReloadScene()
+        {
+            var scene = SceneManager.GetActiveScene();
+            var opts = new LoadSceneParameters();
+            EditorSceneManager.LoadSceneInPlayMode(scene.path, opts);
         }
     }
 }
