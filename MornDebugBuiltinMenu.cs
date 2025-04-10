@@ -105,7 +105,7 @@ namespace MornDebug
             });
         }
 
-        private async UniTask UpdateSubmoduleAsync(CancellationToken ct = default)
+        private async static UniTask UpdateSubmoduleAsync(CancellationToken ct = default)
         {
             var process = MornProcess.MornProcess.CreateAtAssets("git");
             var stashName = $"{nameof(MornDebug)}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
@@ -117,7 +117,7 @@ namespace MornDebug
             MornDebugGlobal.Log("submodule更新完了");
         }
 
-        private async UniTask DeleteDiffAsync(CancellationToken ct = default)
+        private async static UniTask DeleteDiffAsync(CancellationToken ct = default)
         {
             var process = MornProcess.MornProcess.CreateAtAssets("git");
             var stashName = $"{nameof(MornDebug)}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
@@ -127,6 +127,18 @@ namespace MornDebug
             await process.ExecuteAsync("clean -fd", ct);
             process.Dispose();
             MornDebugGlobal.Log("差分全消し完了");
+        }
+        
+        [MenuItem("Tools/Submoduleなおすボタン")]
+        private static void ReloadSubmodule()
+        {
+            UpdateSubmoduleAsync().Forget();
+        }
+        
+        [MenuItem("Tools/差分全消しボタン")]
+        private static void DeleteDiff()
+        {
+            DeleteDiffAsync().Forget();
         }
 
         [MenuItem("Tools/Reload Domain")]
