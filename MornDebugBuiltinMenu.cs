@@ -128,7 +128,8 @@ namespace MornDebug
             process.Dispose();
             MornDebugGlobal.Log("差分全消し完了");
         }
-        
+
+#if UNITY_EDITOR
         [MenuItem("Tools/Submoduleなおすボタン")]
         private static void ReloadSubmodule()
         {
@@ -154,5 +155,6 @@ namespace MornDebug
             var opts = new LoadSceneParameters();
             EditorSceneManager.LoadSceneInPlayMode(scene.path, opts);
         }
+#endif
     }
 }
