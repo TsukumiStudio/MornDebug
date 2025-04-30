@@ -45,6 +45,14 @@ namespace MornDebug
             }
         }
 
+        internal static void OnUpdate()
+        {
+            foreach (var menu in MornDebugGlobal.I.Menus)
+            {
+                menu.OnUpdate();
+            }
+        }
+
         public static void RegisterGUI(string key, Action action, CancellationToken ct = default)
         {
             if (_menuItems.ContainsKey(key))

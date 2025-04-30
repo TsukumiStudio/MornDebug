@@ -7,5 +7,9 @@ namespace MornDebug
     public abstract class MornDebugMenuBase : ScriptableObject
     {
         public abstract IEnumerable<(string key, Action action)> GetMenuItems();
+
+        public virtual void OnUpdate()
+        {
+        }
     }
 }

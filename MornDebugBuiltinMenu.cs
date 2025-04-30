@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine.Audio;
 #endif
 
 namespace MornDebug
@@ -34,7 +35,10 @@ namespace MornDebug
         }
 
         [SerializeField] private string _scenePathPrefix;
+        [SerializeField] private AudioMixer _debugMixer;
+        [SerializeField] private string _mixerVolumeKey;
         private SceneTree _tree;
+        private const string MixerVolumeKey = nameof(MornDebugBuiltinMenu) + "_MixerVolume";
 #endif
 
         public override IEnumerable<(string key, Action action)> GetMenuItems()
@@ -49,6 +53,17 @@ namespace MornDebug
                 }
 
                 GUI.enabled = cachedEnabled;
+            });
+            yield return ("サウンド", () =>
+            {
+                var volume = PlayerPrefs.GetFloat(MixerVolumeKey, 0);
+                GUILayout.Label($"音量 : {volume} dB");
+                var newVolume = GUILayout.HorizontalSlider(volume, -100, 0, GUILayout.Height(10));
+                if (!Mathf.Approximately(volume, newVolume))
+                {
+                    PlayerPrefs.SetFloat(MixerVolumeKey, newVolume);
+                    PlayerPrefs.Save();
+                }
             });
 #if UNITY_EDITOR
             yield return ("リロード", () =>
@@ -105,6 +120,19 @@ namespace MornDebug
             });
         }
 
+        public override void OnUpdate()
+        {
+            base.OnUpdate();
+            if (Application.isPlaying)
+            {
+                if (_debugMixer)
+                {
+                    var volume = PlayerPrefs.GetFloat(MixerVolumeKey, 0);
+                    _debugMixer.SetFloat(_mixerVolumeKey, volume);
+                }
+            }
+        }
+
         private async static UniTask UpdateSubmoduleAsync(CancellationToken ct = default)
         {
             var process = MornProcess.MornProcess.CreateAtAssets("git");
@@ -135,7 +163,7 @@ namespace MornDebug
         {
             UpdateSubmoduleAsync().Forget();
         }
-        
+
         [MenuItem("Tools/差分全消しボタン")]
         private static void DeleteDiff()
         {

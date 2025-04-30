@@ -28,6 +28,7 @@ namespace MornDebug
         private void UpdateLoop()
         {
             Repaint();
+            MornDebugCore.OnUpdate();
         }
 
         private void OnGUI()
