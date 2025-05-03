@@ -40,6 +40,7 @@ namespace MornDebug
         private SceneTree _tree;
         private const string MixerVolumeKey = nameof(MornDebugBuiltinMenu) + "_MixerVolume";
 #endif
+        
 
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
@@ -54,6 +55,7 @@ namespace MornDebug
 
                 GUI.enabled = cachedEnabled;
             });
+#if UNITY_EDITOR
             yield return ("サウンド", () =>
             {
                 var volume = PlayerPrefs.GetFloat(MixerVolumeKey, 0);
@@ -65,7 +67,6 @@ namespace MornDebug
                     PlayerPrefs.Save();
                 }
             });
-#if UNITY_EDITOR
             yield return ("リロード", () =>
             {
                 var cachedEnabled = GUI.enabled;
@@ -98,7 +99,6 @@ namespace MornDebug
                 _tree.OnGUI();
                 GUI.enabled = cachedEnabled;
             });
-#endif
             yield return ("git/便利系", () =>
             {
                 var cachedEnabled = GUI.enabled;
@@ -118,10 +118,12 @@ namespace MornDebug
 
                 GUI.enabled = cachedEnabled;
             });
+#endif
         }
 
         public override void OnUpdate()
         {
+#if UNITY_EDITOR
             base.OnUpdate();
             if (Application.isPlaying)
             {
@@ -131,6 +133,7 @@ namespace MornDebug
                     _debugMixer.SetFloat(_mixerVolumeKey, volume);
                 }
             }
+#endif
         }
 
         private async static UniTask UpdateSubmoduleAsync(CancellationToken ct = default)
