@@ -29,7 +29,7 @@ namespace MornDebug
 
         private void OnGUI()
         {
-            MornDebugCore.OnGUI();
+            MornDebugCore.OnGUI(true);
         }
     }
 }

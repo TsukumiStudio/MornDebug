@@ -4,11 +4,11 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using MornEditor;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEngine.Audio;
 #endif
 
 namespace MornDebug
@@ -17,9 +17,9 @@ namespace MornDebug
     public sealed class MornDebugBuiltinMenu : MornDebugMenuBase
     {
 #if UNITY_EDITOR
-        private class SceneTree : MornEditorTreeBase<EditorBuildSettingsScene>
+        private sealed class SceneAssetTree : MornEditorTreeBase<EditorBuildSettingsScene>
         {
-            public SceneTree(string prefix) : base(prefix)
+            public SceneAssetTree(string prefix) : base(prefix)
             {
             }
 
@@ -35,16 +35,15 @@ namespace MornDebug
         }
 
         [SerializeField] private string _scenePathPrefix;
-        [SerializeField] private AudioMixer _debugMixer;
-        [SerializeField] private string _mixerVolumeKey;
-        private SceneTree _tree;
-        private const string MixerVolumeKey = nameof(MornDebugBuiltinMenu) + "_MixerVolume";
+        private SceneAssetTree _sceneAssetTree;
 #endif
-        
+        [SerializeField] private string _mixerVolumeKey;
+        [SerializeField] private AudioMixer _debugMixer;
+        private const string MixerVolumeKey = nameof(MornDebugBuiltinMenu) + "_MixerVolume";
 
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
-            yield return ("セーブマネージャ", () =>
+            yield return ("セーブマネージャ/データ削除", () =>
             {
                 var cachedEnabled = GUI.enabled;
                 GUI.enabled = !Application.isPlaying;
@@ -55,7 +54,6 @@ namespace MornDebug
 
                 GUI.enabled = cachedEnabled;
             });
-#if UNITY_EDITOR
             yield return ("サウンド", () =>
             {
                 var volume = PlayerPrefs.GetFloat(MixerVolumeKey, 0);
@@ -70,33 +68,45 @@ namespace MornDebug
             yield return ("リロード", () =>
             {
                 var cachedEnabled = GUI.enabled;
-                GUI.enabled = !Application.isPlaying;
-                using (new GUILayout.HorizontalScope())
+                using (new GUILayout.VerticalScope())
                 {
-                    if (GUILayout.Button("Reload Domain"))
+                    GUI.enabled = Application.isPlaying;
+                    if (GUILayout.Button("現在のシーンを読み込み直す"))
                     {
-                        ReloadDomain();
+                        var scene = SceneManager.GetActiveScene();
+                        SceneManager.LoadScene(scene.name, LoadSceneMode.Single);
+                    }
+#if UNITY_EDITOR
+                    GUI.enabled = !Application.isPlaying;
+                    using (new GUILayout.HorizontalScope())
+                    {
+                        if (GUILayout.Button("Reload Domain"))
+                        {
+                            ReloadDomain();
+                        }
+
+                        if (GUILayout.Button("Reload Scene"))
+                        {
+                            ReloadScene();
+                        }
                     }
 
-                    if (GUILayout.Button("Reload Scene"))
-                    {
-                        ReloadScene();
-                    }
+                    GUI.enabled = cachedEnabled;
+#endif
                 }
-
-                GUI.enabled = cachedEnabled;
             });
-            _tree = new SceneTree(_scenePathPrefix);
+#if UNITY_EDITOR
+            _sceneAssetTree = new SceneAssetTree(_scenePathPrefix);
             foreach (var scene in EditorBuildSettings.scenes)
             {
-                _tree.Add(scene);
+                _sceneAssetTree.Add(scene);
             }
 
             yield return ("シーン一覧", () =>
             {
                 var cachedEnabled = GUI.enabled;
                 GUI.enabled = !Application.isPlaying;
-                _tree.OnGUI();
+                _sceneAssetTree.OnGUI();
                 GUI.enabled = cachedEnabled;
             });
             yield return ("git/便利系", () =>
@@ -123,7 +133,6 @@ namespace MornDebug
 
         public override void OnUpdate()
         {
-#if UNITY_EDITOR
             base.OnUpdate();
             if (Application.isPlaying)
             {
@@ -133,9 +142,9 @@ namespace MornDebug
                     _debugMixer.SetFloat(_mixerVolumeKey, volume);
                 }
             }
-#endif
         }
 
+#if UNITY_EDITOR
         private async static UniTask UpdateSubmoduleAsync(CancellationToken ct = default)
         {
             var process = MornProcess.MornProcess.CreateAtAssets("git");
@@ -160,7 +169,6 @@ namespace MornDebug
             MornDebugGlobal.Log("差分全消し完了");
         }
 
-#if UNITY_EDITOR
         [MenuItem("Tools/Submoduleなおすボタン")]
         private static void ReloadSubmodule()
         {

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace MornDebug
@@ -14,6 +15,11 @@ namespace MornDebug
         public void Hide()
         {
             gameObject.SetActive(false);
+        }
+
+        private void Update()
+        {
+            MornDebugCore.OnUpdate();
         }
 
         private void OnGUI()
@@ -39,7 +45,7 @@ namespace MornDebug
             }
             
             // デバッグ情報の表示
-            MornDebugCore.OnGUI();
+            MornDebugCore.OnGUI(false);
 
             GUILayout.EndArea();
         }

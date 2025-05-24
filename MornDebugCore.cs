@@ -8,10 +8,11 @@ namespace MornDebug
 {
     public static class MornDebugCore
     {
-        private static Vector2 _scrollPosition;
-        private static string _currentPath;
+        private static int _updateFrameCount;
         private static readonly List<string> _menuKeys = new();
         private static readonly Dictionary<string, (Action, CancellationToken)> _menuItems = new();
+        private static readonly MornDebugOnGUIDrawer _windowDrawer = new();
+        private static readonly MornDebugOnGUIDrawer _runtimeDrawer = new();
 
         static MornDebugCore()
         {
@@ -21,12 +22,12 @@ namespace MornDebug
             }
         }
 
-        private static IEnumerable<(string, Action, CancellationToken)> GetValues()
+        private static IEnumerable<(string, Action)> GetValues()
         {
             foreach (var key in _menuKeys)
             {
                 var pair = _menuItems[key];
-                yield return (key, pair.Item1, pair.Item2);
+                yield return (key, pair.Item1);
             }
         }
 
@@ -50,83 +51,28 @@ namespace MornDebug
 
         internal static void OnUpdate()
         {
+            if (Time.frameCount == _updateFrameCount)
+            {
+                return; // 既に更新済み
+            }
+
+            _updateFrameCount = Time.frameCount;
             foreach (var menu in MornDebugGlobal.I.Menus)
             {
                 menu.OnUpdate();
             }
         }
 
-        public static void OnGUI()
+        internal static void OnGUI(bool isWindow)
         {
             CheckCancellation();
-            using (var scroll = new GUILayout.ScrollViewScope(_scrollPosition))
+            if (isWindow)
             {
-                _scrollPosition = scroll.scrollPosition;
-                using (new GUILayout.HorizontalScope())
-                {
-                    var canBack = !string.IsNullOrEmpty(_currentPath) && _currentPath.Length > 0;
-                    var cachedEnabled = GUI.enabled;
-                    GUI.enabled = canBack;
-                    if (GUILayout.Button("Root", GUILayout.Width(50)))
-                    {
-                        _currentPath = string.Empty;
-                    }
-
-                    if (GUILayout.Button("Back", GUILayout.Width(50)))
-                    {
-                        var index = _currentPath.LastIndexOf('/');
-                        if (index > 0)
-                        {
-                            var nextIndex = _currentPath.LastIndexOf('/', index - 1);
-                            _currentPath = nextIndex > 0 ? _currentPath[..nextIndex] : string.Empty;
-                        }
-                        else
-                        {
-                            _currentPath = string.Empty;
-                        }
-                    }
-
-                    GUI.enabled = false;
-                    _currentPath = GUILayout.TextField(_currentPath);
-                    GUI.enabled = cachedEnabled;
-                }
-
-                if (_currentPath == null)
-                {
-                    _currentPath = string.Empty;
-                }
-
-                var anyItem = false;
-                foreach (var (key, action, _) in MornDebugCore.GetValues())
-                {
-                    if (string.IsNullOrEmpty(_currentPath) || key.StartsWith(_currentPath))
-                    {
-                        anyItem = true;
-                        var relativePath = key.Substring(_currentPath.Length);
-                        if (relativePath.Contains('/'))
-                        {
-                            var index = relativePath.IndexOf('/');
-                            var folderName = relativePath.Substring(0, index);
-                            if (GUILayout.Button($"▶ {folderName}"))
-                            {
-                                _currentPath += folderName + "/";
-                            }
-                        }
-                        else
-                        {
-                            GUILayout.Label(relativePath, GUI.skin.label);
-                            using (new GUILayout.VerticalScope(GUI.skin.box))
-                            {
-                                action?.Invoke();
-                            }
-                        }
-                    }
-                }
-
-                if (!anyItem)
-                {
-                    GUILayout.Label("No menu items.");
-                }
+                _windowDrawer.OnGUI(GetValues());
+            }
+            else
+            {
+                _runtimeDrawer.OnGUI(GetValues());
             }
         }
 
