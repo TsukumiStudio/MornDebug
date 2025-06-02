@@ -16,7 +16,7 @@ namespace MornDebug
 
         static MornDebugCore()
         {
-            foreach (var (key, action) in MornDebugGlobal.I.Menus.SelectMany(menu => menu.GetMenuItems()))
+            foreach (var (key, action) in MornDebugGlobal.I.Menus.Where(x => x != null).SelectMany(x => x.GetMenuItems()))
             {
                 RegisterGUI(key, action);
             }
@@ -78,6 +78,7 @@ namespace MornDebug
 
         public static void RegisterGUI(string key, Action action, CancellationToken ct = default)
         {
+            CheckCancellation();
             if (_menuItems.ContainsKey(key))
             {
                 MornDebugGlobal.LogWarning($"キーが重複しているので登録処理をスキップします:{key}");
