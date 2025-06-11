@@ -65,6 +65,20 @@ namespace MornDebug
                     PlayerPrefs.Save();
                 }
             });
+            yield return ("時間操作", () =>
+            {
+                if (Application.isPlaying)
+                {
+                    var timeScale = Time.timeScale;
+                    GUILayout.Label($"Time.timeScale : {timeScale}");
+                    var newTimeScale = GUILayout.HorizontalSlider(timeScale, 0, 10, GUILayout.Height(10));
+                    if (!Mathf.Approximately(timeScale, newTimeScale))
+                    {
+                        Time.timeScale = newTimeScale;
+                        MornDebugGlobal.Log($"Time.timeScaleを{newTimeScale}に変更");
+                    }
+                }
+            });
             yield return ("リロード", () =>
             {
                 var cachedEnabled = GUI.enabled;
