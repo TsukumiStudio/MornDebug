@@ -65,17 +65,52 @@ namespace MornDebug
                     PlayerPrefs.Save();
                 }
             });
-            yield return ("時間操作", () =>
+            yield return ("チート/時間操作", () =>
             {
                 if (Application.isPlaying)
                 {
-                    var timeScale = Time.timeScale;
-                    GUILayout.Label($"Time.timeScale : {timeScale}");
-                    var newTimeScale = GUILayout.HorizontalSlider(timeScale, 0, 10, GUILayout.Height(10));
-                    if (!Mathf.Approximately(timeScale, newTimeScale))
+                    using (new GUILayout.VerticalScope())
                     {
-                        Time.timeScale = newTimeScale;
-                        MornDebugGlobal.Log($"Time.timeScaleを{newTimeScale}に変更");
+                        var timeScale = Time.timeScale;
+                        GUILayout.Label($"Time.timeScale : {timeScale}");
+                        var newTimeScale = GUILayout.HorizontalSlider(timeScale, 0, 10);
+                        GUILayout.Space(15);
+                        if (!Mathf.Approximately(timeScale, newTimeScale))
+                        {
+                            Time.timeScale = newTimeScale;
+                        }
+                        
+                        using (new GUILayout.HorizontalScope())
+                        {
+                            if (GUILayout.Button("-1"))
+                            {
+                                var decrementedScale = Mathf.Max(timeScale - 1f, 0f);
+                                Time.timeScale = decrementedScale;
+                            }
+                            
+                            if (GUILayout.Button("-0.1"))
+                            {
+                                var decrementedScale = Mathf.Max(timeScale - 0.1f, 0f);
+                                Time.timeScale = decrementedScale;
+                            }
+                            
+                            if (GUILayout.Button("=1"))
+                            {
+                                Time.timeScale = 1f;
+                            }
+                            
+                            if (GUILayout.Button("+0.1"))
+                            {
+                                var incrementedScale = Mathf.Min(timeScale + 0.1f, 10f);
+                                Time.timeScale = incrementedScale;
+                            }
+                            
+                            if (GUILayout.Button("+1"))
+                            {
+                                var incrementedScale = Mathf.Min(timeScale + 1f, 10f);
+                                Time.timeScale = incrementedScale;
+                            }
+                        }
                     }
                 }
             });
