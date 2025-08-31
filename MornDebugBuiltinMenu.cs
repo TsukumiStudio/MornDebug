@@ -166,12 +166,18 @@ namespace MornDebug
                 {
                     if (GUILayout.Button("Submodule更新"))
                     {
-                        UpdateSubmoduleAsync().Forget();
+                        if (EditorUtility.DisplayDialog("確認", "本当にSubmoduleを更新しますか？\n現在の変更はstashに退避されます。", "実行", "キャンセル"))
+                        {
+                            UpdateSubmoduleAsync().Forget();
+                        }
                     }
 
                     if (GUILayout.Button("差分全消し"))
                     {
-                        DeleteDiffAsync().Forget();
+                        if (EditorUtility.DisplayDialog("警告", "本当に差分を全て削除しますか？\nこの操作は取り消せません。\n現在の変更はstashに退避されます。", "実行", "キャンセル"))
+                        {
+                            DeleteDiffAsync().Forget();
+                        }
                     }
                 }
 
@@ -214,20 +220,27 @@ namespace MornDebug
             await process.ExecuteAsync($"submodule foreach --recursive git stash push -m \"{stashName}\"", ct);
             await process.ExecuteAsync("reset --hard HEAD", ct);
             await process.ExecuteAsync("clean -fd", ct);
+            await process.ExecuteAsync("submodule update --init --recursive", ct);
             process.Dispose();
             MornDebugGlobal.Log("差分全消し完了");
         }
 
-        [MenuItem("Tools/Submoduleなおすボタン")]
+        [MenuItem("Tools/MornDebug/Git Submodule再取得")]
         private static void ReloadSubmodule()
         {
-            UpdateSubmoduleAsync().Forget();
+            if (EditorUtility.DisplayDialog("確認", "本当にSubmoduleを再取得しますか？\n現在の変更はstashに退避されます。", "実行", "キャンセル"))
+            {
+                UpdateSubmoduleAsync().Forget();
+            }
         }
 
-        [MenuItem("Tools/差分全消しボタン")]
+        [MenuItem("Tools/MornDebug/Git 差分全消しボタン")]
         private static void DeleteDiff()
         {
-            DeleteDiffAsync().Forget();
+            if (EditorUtility.DisplayDialog("警告", "本当に差分を全て削除しますか？\nこの操作は取り消せません。\n現在の変更はstashに退避されます。", "実行", "キャンセル"))
+            {
+                DeleteDiffAsync().Forget();
+            }
         }
 
         [MenuItem("Tools/Reload Domain")]
