@@ -13,7 +13,7 @@ using UnityEditor.SceneManagement;
 
 namespace MornDebug
 {
-    [CreateAssetMenu(fileName = nameof(MornDebugBuiltinMenu), menuName = "Morn/" + nameof(MornDebugBuiltinMenu))]
+    [CreateAssetMenu(fileName = nameof(MornDebugBuiltinMenu), menuName = "Morn/Debug/" + nameof(MornDebugBuiltinMenu))]
     public sealed class MornDebugBuiltinMenu : MornDebugMenuBase
     {
 #if UNITY_EDITOR
@@ -45,14 +45,13 @@ namespace MornDebug
         {
             yield return ("セーブマネージャ/データ削除", () =>
             {
-                var cachedEnabled = GUI.enabled;
-                GUI.enabled = !Application.isPlaying;
-                if (GUILayout.Button("PlayerPrefsをリセット"))
+                using (new MornGUILayout.EnableScope(!Application.isPlaying))
                 {
-                    PlayerPrefs.DeleteAll();
+                    if (GUILayout.Button("PlayerPrefsをリセット"))
+                    {
+                        PlayerPrefs.DeleteAll();
+                    }
                 }
-
-                GUI.enabled = cachedEnabled;
             });
             yield return ("サウンド", () =>
             {
@@ -67,7 +66,7 @@ namespace MornDebug
             });
             yield return ("チート/時間操作", () =>
             {
-                if (Application.isPlaying)
+                using (new MornGUILayout.EnableScope(Application.isPlaying))
                 {
                     using (new GUILayout.VerticalScope())
                     {
@@ -79,7 +78,7 @@ namespace MornDebug
                         {
                             Time.timeScale = newTimeScale;
                         }
-                        
+
                         using (new GUILayout.HorizontalScope())
                         {
                             if (GUILayout.Button("-1"))
@@ -87,24 +86,24 @@ namespace MornDebug
                                 var decrementedScale = Mathf.Max(timeScale - 1f, 0f);
                                 Time.timeScale = decrementedScale;
                             }
-                            
+
                             if (GUILayout.Button("-0.1"))
                             {
                                 var decrementedScale = Mathf.Max(timeScale - 0.1f, 0f);
                                 Time.timeScale = decrementedScale;
                             }
-                            
+
                             if (GUILayout.Button("=1"))
                             {
                                 Time.timeScale = 1f;
                             }
-                            
+
                             if (GUILayout.Button("+0.1"))
                             {
                                 var incrementedScale = Mathf.Min(timeScale + 0.1f, 10f);
                                 Time.timeScale = incrementedScale;
                             }
-                            
+
                             if (GUILayout.Button("+1"))
                             {
                                 var incrementedScale = Mathf.Min(timeScale + 1f, 10f);
@@ -116,31 +115,32 @@ namespace MornDebug
             });
             yield return ("リロード", () =>
             {
-                var cachedEnabled = GUI.enabled;
                 using (new GUILayout.VerticalScope())
                 {
-                    GUI.enabled = Application.isPlaying;
-                    if (GUILayout.Button("現在のシーンを読み込み直す"))
+                    using (new MornGUILayout.EnableScope(Application.isPlaying))
                     {
-                        var scene = SceneManager.GetActiveScene();
-                        SceneManager.LoadScene(scene.name, LoadSceneMode.Single);
+                        if (GUILayout.Button("現在のシーンを読み込み直す"))
+                        {
+                            var scene = SceneManager.GetActiveScene();
+                            SceneManager.LoadScene(scene.name, LoadSceneMode.Single);
+                        }
                     }
 #if UNITY_EDITOR
-                    GUI.enabled = !Application.isPlaying;
-                    using (new GUILayout.HorizontalScope())
+                    using (new MornGUILayout.EnableScope(!Application.isPlaying))
                     {
-                        if (GUILayout.Button("Reload Domain"))
+                        using (new GUILayout.HorizontalScope())
                         {
-                            ReloadDomain();
-                        }
+                            if (GUILayout.Button("Reload Domain"))
+                            {
+                                ReloadDomain();
+                            }
 
-                        if (GUILayout.Button("Reload Scene"))
-                        {
-                            ReloadScene();
+                            if (GUILayout.Button("Reload Scene"))
+                            {
+                                ReloadScene();
+                            }
                         }
                     }
-
-                    GUI.enabled = cachedEnabled;
 #endif
                 }
             });
@@ -153,35 +153,10 @@ namespace MornDebug
 
             yield return ("シーン一覧", () =>
             {
-                var cachedEnabled = GUI.enabled;
-                GUI.enabled = !Application.isPlaying;
-                _sceneAssetTree.OnGUI();
-                GUI.enabled = cachedEnabled;
-            });
-            yield return ("git/便利系", () =>
-            {
-                var cachedEnabled = GUI.enabled;
-                GUI.enabled = !Application.isPlaying;
-                using (new GUILayout.HorizontalScope())
+                using (new MornGUILayout.EnableScope(!Application.isPlaying))
                 {
-                    if (GUILayout.Button("Submodule更新"))
-                    {
-                        if (EditorUtility.DisplayDialog("確認", "本当にSubmoduleを更新しますか？\n現在の変更はstashに退避されます。", "実行", "キャンセル"))
-                        {
-                            UpdateSubmoduleAsync().Forget();
-                        }
-                    }
-
-                    if (GUILayout.Button("差分全消し"))
-                    {
-                        if (EditorUtility.DisplayDialog("警告", "本当に差分を全て削除しますか？\nこの操作は取り消せません。\n現在の変更はstashに退避されます。", "実行", "キャンセル"))
-                        {
-                            DeleteDiffAsync().Forget();
-                        }
-                    }
+                    _sceneAssetTree.OnGUI();
                 }
-
-                GUI.enabled = cachedEnabled;
             });
 #endif
         }
@@ -200,49 +175,6 @@ namespace MornDebug
         }
 
 #if UNITY_EDITOR
-        private async static UniTask UpdateSubmoduleAsync(CancellationToken ct = default)
-        {
-            var process = MornProcess.MornProcess.CreateAtAssets("git");
-            var stashName = $"{nameof(MornDebug)}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
-            await process.ExecuteAsync($"stash push -m \"{stashName}\"", ct);
-            await process.ExecuteAsync($"submodule foreach --recursive git stash push -m \"{stashName}\"", ct);
-            await process.ExecuteAsync("submodule deinit -f --all", ct);
-            await process.ExecuteAsync("submodule update --init --recursive", ct);
-            process.Dispose();
-            MornDebugGlobal.Log("submodule更新完了");
-        }
-
-        private async static UniTask DeleteDiffAsync(CancellationToken ct = default)
-        {
-            var process = MornProcess.MornProcess.CreateAtAssets("git");
-            var stashName = $"{nameof(MornDebug)}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
-            await process.ExecuteAsync($"stash push -m \"{stashName}\"", ct);
-            await process.ExecuteAsync($"submodule foreach --recursive git stash push -m \"{stashName}\"", ct);
-            await process.ExecuteAsync("reset --hard HEAD", ct);
-            await process.ExecuteAsync("clean -fd", ct);
-            await process.ExecuteAsync("submodule update --init --recursive", ct);
-            process.Dispose();
-            MornDebugGlobal.Log("差分全消し完了");
-        }
-
-        [MenuItem("Tools/MornDebug/Git Submodule再取得")]
-        private static void ReloadSubmodule()
-        {
-            if (EditorUtility.DisplayDialog("確認", "本当にSubmoduleを再取得しますか？\n現在の変更はstashに退避されます。", "実行", "キャンセル"))
-            {
-                UpdateSubmoduleAsync().Forget();
-            }
-        }
-
-        [MenuItem("Tools/MornDebug/Git 差分全消しボタン")]
-        private static void DeleteDiff()
-        {
-            if (EditorUtility.DisplayDialog("警告", "本当に差分を全て削除しますか？\nこの操作は取り消せません。\n現在の変更はstashに退避されます。", "実行", "キャンセル"))
-            {
-                DeleteDiffAsync().Forget();
-            }
-        }
-
         [MenuItem("Tools/Reload Domain")]
         private static void ReloadDomain()
         {
