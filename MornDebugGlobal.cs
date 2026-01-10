@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MornLib
 {
-    [CreateAssetMenu(fileName = nameof(MornDebugGlobal), menuName = "Morn/" + nameof(MornDebugGlobal))]
+    [CreateAssetMenu(fileName = nameof(MornDebugGlobal), menuName = "Morn/Debug/" + nameof(MornDebugGlobal))]
     internal sealed class MornDebugGlobal : MornGlobalBase<MornDebugGlobal>
     {
         [SerializeField] private List<MornDebugMenuBase> _menus;
