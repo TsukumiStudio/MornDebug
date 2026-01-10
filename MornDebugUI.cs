@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MornDebug
+namespace MornLib
 {
     public sealed class MornDebugUI : MonoBehaviour
     {
