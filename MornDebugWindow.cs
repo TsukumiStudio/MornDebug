@@ -1,7 +1,7 @@
 ﻿#if UNITY_EDITOR
 using UnityEditor;
 
-namespace MornDebug
+namespace MornLib
 {
     internal sealed class MornDebugWindow : EditorWindow
     {

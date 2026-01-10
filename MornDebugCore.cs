@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 
-namespace MornDebug
+namespace MornLib
 {
     public static class MornDebugCore
     {

@@ -11,7 +11,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
-namespace MornDebug
+namespace MornLib
 {
     [CreateAssetMenu(fileName = nameof(MornDebugBuiltinMenu), menuName = "Morn/" + nameof(MornDebugBuiltinMenu))]
     public sealed class MornDebugBuiltinMenu : MornDebugMenuBase
@@ -79,7 +79,7 @@ namespace MornDebug
                         {
                             Time.timeScale = newTimeScale;
                         }
-                        
+
                         using (new GUILayout.HorizontalScope())
                         {
                             if (GUILayout.Button("-1"))
@@ -87,24 +87,24 @@ namespace MornDebug
                                 var decrementedScale = Mathf.Max(timeScale - 1f, 0f);
                                 Time.timeScale = decrementedScale;
                             }
-                            
+
                             if (GUILayout.Button("-0.1"))
                             {
                                 var decrementedScale = Mathf.Max(timeScale - 0.1f, 0f);
                                 Time.timeScale = decrementedScale;
                             }
-                            
+
                             if (GUILayout.Button("=1"))
                             {
                                 Time.timeScale = 1f;
                             }
-                            
+
                             if (GUILayout.Button("+0.1"))
                             {
                                 var incrementedScale = Mathf.Min(timeScale + 0.1f, 10f);
                                 Time.timeScale = incrementedScale;
                             }
-                            
+
                             if (GUILayout.Button("+1"))
                             {
                                 var incrementedScale = Mathf.Min(timeScale + 1f, 10f);
@@ -202,8 +202,8 @@ namespace MornDebug
 #if UNITY_EDITOR
         private async static UniTask UpdateSubmoduleAsync(CancellationToken ct = default)
         {
-            var process = MornProcess.MornProcess.CreateAtAssets("git");
-            var stashName = $"{nameof(MornDebug)}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
+            var process = MornProcess.CreateAtAssets("git");
+            var stashName = $"{MornDebugGlobal.I.ModuleName}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
             await process.ExecuteAsync($"stash push -m \"{stashName}\"", ct);
             await process.ExecuteAsync($"submodule foreach --recursive git stash push -m \"{stashName}\"", ct);
             await process.ExecuteAsync("submodule deinit -f --all", ct);
@@ -214,8 +214,8 @@ namespace MornDebug
 
         private async static UniTask DeleteDiffAsync(CancellationToken ct = default)
         {
-            var process = MornProcess.MornProcess.CreateAtAssets("git");
-            var stashName = $"{nameof(MornDebug)}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
+            var process = MornProcess.CreateAtAssets("git");
+            var stashName = $"{MornDebugGlobal.I.ModuleName}による退避 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
             await process.ExecuteAsync($"stash push -m \"{stashName}\"", ct);
             await process.ExecuteAsync($"submodule foreach --recursive git stash push -m \"{stashName}\"", ct);
             await process.ExecuteAsync("reset --hard HEAD", ct);

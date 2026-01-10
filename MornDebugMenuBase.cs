@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MornDebug
+namespace MornLib
 {
     public abstract class MornDebugMenuBase : ScriptableObject
     {
