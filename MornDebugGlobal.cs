@@ -8,7 +8,7 @@ namespace MornLib
     {
         [SerializeField] private List<MornDebugMenuBase> _menus;
         public List<MornDebugMenuBase> Menus => _menus;
-        public override string ModuleName => "MornDebug";
+        protected override string ModuleName => "MornDebug";
 
         public static void Log(string message)
         {
