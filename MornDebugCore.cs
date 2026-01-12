@@ -16,7 +16,8 @@ namespace MornLib
 
         static MornDebugCore()
         {
-            foreach (var (key, action) in MornDebugGlobal.I.Menus.Where(x => x != null).SelectMany(x => x.GetMenuItems()))
+            foreach (var (key, action) in MornDebugGlobal.I.Menus.Where(x => x != null)
+                                                         .SelectMany(x => x.GetMenuItems()))
             {
                 RegisterGUI(key, action);
             }
@@ -81,7 +82,7 @@ namespace MornLib
             CheckCancellation();
             if (_menuItems.ContainsKey(key))
             {
-                MornDebugGlobal.LogWarning($"キーが重複しているので登録処理をスキップします:{key}");
+                MornDebugGlobal.Logger.LogWarning($"キーが重複しているので登録処理をスキップします:{key}");
                 return;
             }
 
@@ -94,7 +95,7 @@ namespace MornLib
         {
             if (!_menuItems.ContainsKey(key))
             {
-                MornDebugGlobal.LogWarning($"キーが見つからないので削除処理をスキップします:{key}");
+                MornDebugGlobal.Logger.LogWarning($"キーが見つからないので削除処理をスキップします:{key}");
                 return;
             }
 
