@@ -77,6 +77,11 @@ namespace MornLib
             }
         }
 
+        /// <summary>
+        /// デバッグメニューにGUI描画コールバックを登録する。
+        /// actionはOnGUI内で呼ばれるので、GUILayout.Button/Label等を使って自由にUI構築できる。
+        /// 例: RegisterGUI("チート/ポイント操作", () => { GUILayout.Label("現在: 100pt"); if(GUILayout.Button("+100")) ... }, ct);
+        /// </summary>
         public static void RegisterGUI(string key, Action action, CancellationToken ct = default)
         {
             CheckCancellation();
