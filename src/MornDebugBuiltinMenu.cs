@@ -41,7 +41,7 @@ namespace MornLib
 
         [Header("サウンド")]
         [SerializeField] private bool _enableSound = true;
-        [SerializeField] private AudioMixer _debugMixer;
+        [SerializeField] private AudioMixer _audioMixer;
         private string[] _exposedParams;
 
         [Header("チート")]
@@ -70,13 +70,13 @@ namespace MornLib
             {
                 yield return ("サウンド", () =>
                 {
-                    if (_debugMixer == null)
+                    if (_audioMixer == null)
                     {
                         GUILayout.Label("AudioMixerが未設定です。");
                         return;
                     }
 
-                    GUILayout.Label($"Mixer: {_debugMixer.name}");
+                    GUILayout.Label($"Mixer: {_audioMixer.name}");
                     if (_exposedParams == null)
                     {
                         CacheExposedParams();
@@ -90,13 +90,13 @@ namespace MornLib
 
                     foreach (var param in _exposedParams)
                     {
-                        if (!_debugMixer.GetFloat(param, out var value)) continue;
+                        if (!_audioMixer.GetFloat(param, out var value)) continue;
                         GUILayout.Label($"{param}: {value:F1} dB");
                         var newValue = GUILayout.HorizontalSlider(value, -80, 20, GUILayout.Height(10));
                         GUILayout.Space(5);
                         if (!Mathf.Approximately(value, newValue))
                         {
-                            _debugMixer.SetFloat(param, newValue);
+                            _audioMixer.SetFloat(param, newValue);
                         }
                     }
 
@@ -106,7 +106,7 @@ namespace MornLib
                         {
                             foreach (var param in _exposedParams)
                             {
-                                _debugMixer.SetFloat(param, -80);
+                                _audioMixer.SetFloat(param, -80);
                             }
                         }
 
@@ -114,7 +114,7 @@ namespace MornLib
                         {
                             foreach (var param in _exposedParams)
                             {
-                                _debugMixer.SetFloat(param, 0);
+                                _audioMixer.SetFloat(param, 0);
                             }
                         }
                     }
@@ -230,7 +230,7 @@ namespace MornLib
         {
             var paramList = new List<string>();
 #if UNITY_EDITOR
-            var so = new SerializedObject(_debugMixer);
+            var so = new SerializedObject(_audioMixer);
             var exposedParams = so.FindProperty("m_ExposedParameters");
             if (exposedParams != null)
             {
