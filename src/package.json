@@ -2,7 +2,7 @@
   "name": "com.tsukumistudio.morndebug",
   "version": "1.0.0",
   "displayName": "MornDebug",
-  "description": "階層型デバッグメニューフレームワーク。Editor・ランタイム両対応。",
+  "description": "デバッグ用のボタンやスライダーをすぐに生やせるデバッグ補助ツール。Editor・ランタイム両対応。",
   "unity": "6000.0",
   "license": "Unlicense",
   "author": {
