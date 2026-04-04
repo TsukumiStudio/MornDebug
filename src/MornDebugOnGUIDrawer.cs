@@ -6,7 +6,7 @@ namespace MornLib
 {
     internal sealed class MornDebugOnGUIDrawer
     {
-        private GUIStyle _boldStyle;
+        private GUIStyle _headerStyle;
         private Vector2 _scrollPosition;
         private string _currentPath;
         private readonly List<string> _groups = new();
@@ -15,9 +15,9 @@ namespace MornLib
 
         public void OnGUI(IEnumerable<(string, Action)> pairs)
         {
-            if (_boldStyle == null)
+            if (_headerStyle == null)
             {
-                _boldStyle = new GUIStyle(GUI.skin.label)
+                _headerStyle = new GUIStyle(GUI.skin.label)
                 {
                     fontStyle = FontStyle.Bold,
                 };
@@ -91,7 +91,7 @@ namespace MornLib
 
             if (_groups.Count == 0 && _endpoints.Count == 0)
             {
-                GUILayout.Label("No items in this path.");
+                GUILayout.Label("項目がありません。");
                 return;
             }
 
@@ -110,7 +110,7 @@ namespace MornLib
 
             foreach (var (relativePath, action) in _endpoints)
             {
-                GUILayout.Label(relativePath, _boldStyle);
+                GUILayout.Label(relativePath, _headerStyle);
                 using (new GUILayout.VerticalScope(GUI.skin.box))
                 {
                     action?.Invoke();

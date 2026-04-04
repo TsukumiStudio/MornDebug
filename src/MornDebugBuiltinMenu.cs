@@ -14,7 +14,7 @@ namespace MornLib
     public sealed class MornDebugBuiltinMenu : MornDebugMenuBase
     {
 #if UNITY_EDITOR
-        private sealed class SceneAssetTree : MornEditorTreeBase<EditorBuildSettingsScene>
+        private sealed class SceneAssetTree : MornDebugTreeBase<EditorBuildSettingsScene>
         {
             public SceneAssetTree(string prefix) : base(prefix)
             {
@@ -34,15 +34,14 @@ namespace MornLib
         [SerializeField] private string _scenePathPrefix;
         private SceneAssetTree _sceneAssetTree;
 #endif
-        [SerializeField] private string _mixerVolumeKey;
         [SerializeField] private AudioMixer _debugMixer;
-        private const string MixerVolumeKey = nameof(MornDebugBuiltinMenu) + "_MixerVolume";
+        private string[] _exposedParams;
 
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
-            yield return ("セーブマネージャ/データ削除", () =>
+            yield return ("セーブ/データ削除", () =>
             {
-                using (new MornGUILayout.EnableScope(!Application.isPlaying))
+                using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
                 {
                     if (GUILayout.Button("PlayerPrefsをリセット"))
                     {
@@ -52,18 +51,58 @@ namespace MornLib
             });
             yield return ("サウンド", () =>
             {
-                var volume = PlayerPrefs.GetFloat(MixerVolumeKey, 0);
-                GUILayout.Label($"音量 : {volume} dB");
-                var newVolume = GUILayout.HorizontalSlider(volume, -100, 0, GUILayout.Height(10));
-                if (!Mathf.Approximately(volume, newVolume))
+                if (_debugMixer == null)
                 {
-                    PlayerPrefs.SetFloat(MixerVolumeKey, newVolume);
-                    PlayerPrefs.Save();
+                    GUILayout.Label("AudioMixerが未設定です。");
+                    return;
+                }
+
+                GUILayout.Label($"Mixer: {_debugMixer.name}");
+                if (_exposedParams == null)
+                {
+                    CacheExposedParams();
+                }
+
+                if (_exposedParams.Length == 0)
+                {
+                    GUILayout.Label("公開パラメータがありません。");
+                    return;
+                }
+
+                foreach (var param in _exposedParams)
+                {
+                    if (!_debugMixer.GetFloat(param, out var value)) continue;
+                    GUILayout.Label($"{param}: {value:F1} dB");
+                    var newValue = GUILayout.HorizontalSlider(value, -80, 20, GUILayout.Height(10));
+                    GUILayout.Space(5);
+                    if (!Mathf.Approximately(value, newValue))
+                    {
+                        _debugMixer.SetFloat(param, newValue);
+                    }
+                }
+
+                using (new GUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("全てミュート"))
+                    {
+                        foreach (var param in _exposedParams)
+                        {
+                            _debugMixer.SetFloat(param, -80);
+                        }
+                    }
+
+                    if (GUILayout.Button("全てリセット(0dB)"))
+                    {
+                        foreach (var param in _exposedParams)
+                        {
+                            _debugMixer.SetFloat(param, 0);
+                        }
+                    }
                 }
             });
             yield return ("チート/時間操作", () =>
             {
-                using (new MornGUILayout.EnableScope(Application.isPlaying))
+                using (new MornDebugGUILayout.EnableScope(Application.isPlaying))
                 {
                     using (new GUILayout.VerticalScope())
                     {
@@ -114,7 +153,7 @@ namespace MornLib
             {
                 using (new GUILayout.VerticalScope())
                 {
-                    using (new MornGUILayout.EnableScope(Application.isPlaying))
+                    using (new MornDebugGUILayout.EnableScope(Application.isPlaying))
                     {
                         if (GUILayout.Button("現在のシーンを読み込み直す"))
                         {
@@ -123,7 +162,7 @@ namespace MornLib
                         }
                     }
 #if UNITY_EDITOR
-                    using (new MornGUILayout.EnableScope(!Application.isPlaying))
+                    using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
                     {
                         using (new GUILayout.HorizontalScope())
                         {
@@ -150,7 +189,7 @@ namespace MornLib
 
             yield return ("シーン一覧", () =>
             {
-                using (new MornGUILayout.EnableScope(!Application.isPlaying))
+                using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
                 {
                     _sceneAssetTree.OnGUI();
                 }
@@ -158,17 +197,26 @@ namespace MornLib
 #endif
         }
 
-        public override void OnUpdate()
+        private void CacheExposedParams()
         {
-            base.OnUpdate();
-            if (Application.isPlaying)
+            var paramList = new List<string>();
+#if UNITY_EDITOR
+            var so = new SerializedObject(_debugMixer);
+            var exposedParams = so.FindProperty("m_ExposedParameters");
+            if (exposedParams != null)
             {
-                if (_debugMixer)
+                for (var i = 0; i < exposedParams.arraySize; i++)
                 {
-                    var volume = PlayerPrefs.GetFloat(MixerVolumeKey, 0);
-                    _debugMixer.SetFloat(_mixerVolumeKey, volume);
+                    var param = exposedParams.GetArrayElementAtIndex(i);
+                    var name = param.FindPropertyRelative("name")?.stringValue;
+                    if (!string.IsNullOrEmpty(name))
+                    {
+                        paramList.Add(name);
+                    }
                 }
             }
+#endif
+            _exposedParams = paramList.ToArray();
         }
 
 #if UNITY_EDITOR

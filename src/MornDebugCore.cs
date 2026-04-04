@@ -16,8 +16,9 @@ namespace MornLib
 
         static MornDebugCore()
         {
-            foreach (var (key, action) in MornDebugGlobal.I.Menus.Where(x => x != null)
-                                                         .SelectMany(x => x.GetMenuItems()))
+            var menus = MornDebugGlobal.I?.Menus;
+            if (menus == null) return;
+            foreach (var (key, action) in menus.Where(x => x != null).SelectMany(x => x.GetMenuItems()))
             {
                 RegisterGUI(key, action);
             }
@@ -58,9 +59,11 @@ namespace MornLib
             }
 
             _updateFrameCount = Time.frameCount;
-            foreach (var menu in MornDebugGlobal.I.Menus)
+            var menus = MornDebugGlobal.I?.Menus;
+            if (menus == null) return;
+            foreach (var menu in menus)
             {
-                menu.OnUpdate();
+                menu?.OnUpdate();
             }
         }
 
@@ -76,6 +79,7 @@ namespace MornLib
                 _runtimeDrawer.OnGUI(GetValues());
             }
         }
+
 
         /// <summary>
         /// デバッグメニューにGUI描画コールバックを登録する。
