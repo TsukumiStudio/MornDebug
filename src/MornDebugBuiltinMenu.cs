@@ -33,7 +33,7 @@ namespace MornLib
 
         [Header("Editor")]
         [SerializeField] private bool _enableSceneList = true;
-        [SerializeField] private string _scenePathPrefix;
+        [SerializeField] private DefaultAsset _sceneFolder;
         private SceneAssetTree _sceneAssetTree;
 #endif
         [Header("セーブ")]
@@ -208,7 +208,8 @@ namespace MornLib
 #if UNITY_EDITOR
             if (_enableSceneList)
             {
-                _sceneAssetTree = new SceneAssetTree(_scenePathPrefix);
+                var prefix = _sceneFolder != null ? AssetDatabase.GetAssetPath(_sceneFolder) + "/" : "";
+                _sceneAssetTree = new SceneAssetTree(prefix);
                 foreach (var scene in EditorBuildSettings.scenes)
                 {
                     _sceneAssetTree.Add(scene);
