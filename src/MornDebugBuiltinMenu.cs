@@ -31,169 +31,197 @@ namespace MornLib
             }
         }
 
+        [Header("Editor")]
+        [SerializeField] private bool _enableSceneList = true;
         [SerializeField] private string _scenePathPrefix;
         private SceneAssetTree _sceneAssetTree;
 #endif
+        [Header("セーブ")]
+        [SerializeField] private bool _enableSave = true;
+
+        [Header("サウンド")]
+        [SerializeField] private bool _enableSound = true;
         [SerializeField] private AudioMixer _debugMixer;
         private string[] _exposedParams;
 
+        [Header("チート")]
+        [SerializeField] private bool _enableTimeScale = true;
+
+        [Header("リロード")]
+        [SerializeField] private bool _enableReload = true;
+
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
-            yield return ("セーブ/データ削除", () =>
+            if (_enableSave)
             {
-                using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
+                yield return ("セーブ/データ削除", () =>
                 {
-                    if (GUILayout.Button("PlayerPrefsをリセット"))
+                    using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
                     {
-                        PlayerPrefs.DeleteAll();
-                    }
-                }
-            });
-            yield return ("サウンド", () =>
-            {
-                if (_debugMixer == null)
-                {
-                    GUILayout.Label("AudioMixerが未設定です。");
-                    return;
-                }
-
-                GUILayout.Label($"Mixer: {_debugMixer.name}");
-                if (_exposedParams == null)
-                {
-                    CacheExposedParams();
-                }
-
-                if (_exposedParams.Length == 0)
-                {
-                    GUILayout.Label("公開パラメータがありません。");
-                    return;
-                }
-
-                foreach (var param in _exposedParams)
-                {
-                    if (!_debugMixer.GetFloat(param, out var value)) continue;
-                    GUILayout.Label($"{param}: {value:F1} dB");
-                    var newValue = GUILayout.HorizontalSlider(value, -80, 20, GUILayout.Height(10));
-                    GUILayout.Space(5);
-                    if (!Mathf.Approximately(value, newValue))
-                    {
-                        _debugMixer.SetFloat(param, newValue);
-                    }
-                }
-
-                using (new GUILayout.HorizontalScope())
-                {
-                    if (GUILayout.Button("全てミュート"))
-                    {
-                        foreach (var param in _exposedParams)
+                        if (GUILayout.Button("PlayerPrefsをリセット"))
                         {
-                            _debugMixer.SetFloat(param, -80);
+                            PlayerPrefs.DeleteAll();
+                        }
+                    }
+                });
+            }
+
+            if (_enableSound)
+            {
+                yield return ("サウンド", () =>
+                {
+                    if (_debugMixer == null)
+                    {
+                        GUILayout.Label("AudioMixerが未設定です。");
+                        return;
+                    }
+
+                    GUILayout.Label($"Mixer: {_debugMixer.name}");
+                    if (_exposedParams == null)
+                    {
+                        CacheExposedParams();
+                    }
+
+                    if (_exposedParams.Length == 0)
+                    {
+                        GUILayout.Label("公開パラメータがありません。");
+                        return;
+                    }
+
+                    foreach (var param in _exposedParams)
+                    {
+                        if (!_debugMixer.GetFloat(param, out var value)) continue;
+                        GUILayout.Label($"{param}: {value:F1} dB");
+                        var newValue = GUILayout.HorizontalSlider(value, -80, 20, GUILayout.Height(10));
+                        GUILayout.Space(5);
+                        if (!Mathf.Approximately(value, newValue))
+                        {
+                            _debugMixer.SetFloat(param, newValue);
                         }
                     }
 
-                    if (GUILayout.Button("全てリセット(0dB)"))
+                    using (new GUILayout.HorizontalScope())
                     {
-                        foreach (var param in _exposedParams)
+                        if (GUILayout.Button("全てミュート"))
                         {
-                            _debugMixer.SetFloat(param, 0);
-                        }
-                    }
-                }
-            });
-            yield return ("チート/時間操作", () =>
-            {
-                using (new MornDebugGUILayout.EnableScope(Application.isPlaying))
-                {
-                    using (new GUILayout.VerticalScope())
-                    {
-                        var timeScale = Time.timeScale;
-                        GUILayout.Label($"Time.timeScale : {timeScale}");
-                        var newTimeScale = GUILayout.HorizontalSlider(timeScale, 0, 10);
-                        GUILayout.Space(15);
-                        if (!Mathf.Approximately(timeScale, newTimeScale))
-                        {
-                            Time.timeScale = newTimeScale;
+                            foreach (var param in _exposedParams)
+                            {
+                                _debugMixer.SetFloat(param, -80);
+                            }
                         }
 
-                        using (new GUILayout.HorizontalScope())
+                        if (GUILayout.Button("全てリセット(0dB)"))
                         {
-                            if (GUILayout.Button("-1"))
+                            foreach (var param in _exposedParams)
                             {
-                                var decrementedScale = Mathf.Max(timeScale - 1f, 0f);
-                                Time.timeScale = decrementedScale;
-                            }
-
-                            if (GUILayout.Button("-0.1"))
-                            {
-                                var decrementedScale = Mathf.Max(timeScale - 0.1f, 0f);
-                                Time.timeScale = decrementedScale;
-                            }
-
-                            if (GUILayout.Button("=1"))
-                            {
-                                Time.timeScale = 1f;
-                            }
-
-                            if (GUILayout.Button("+0.1"))
-                            {
-                                var incrementedScale = Mathf.Min(timeScale + 0.1f, 10f);
-                                Time.timeScale = incrementedScale;
-                            }
-
-                            if (GUILayout.Button("+1"))
-                            {
-                                var incrementedScale = Mathf.Min(timeScale + 1f, 10f);
-                                Time.timeScale = incrementedScale;
+                                _debugMixer.SetFloat(param, 0);
                             }
                         }
                     }
-                }
-            });
-            yield return ("リロード", () =>
+                });
+            }
+
+            if (_enableTimeScale)
             {
-                using (new GUILayout.VerticalScope())
+                yield return ("チート/時間操作", () =>
                 {
                     using (new MornDebugGUILayout.EnableScope(Application.isPlaying))
                     {
-                        if (GUILayout.Button("現在のシーンを読み込み直す"))
+                        using (new GUILayout.VerticalScope())
                         {
-                            var scene = SceneManager.GetActiveScene();
-                            SceneManager.LoadScene(scene.name, LoadSceneMode.Single);
-                        }
-                    }
-#if UNITY_EDITOR
-                    using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
-                    {
-                        using (new GUILayout.HorizontalScope())
-                        {
-                            if (GUILayout.Button("Reload Domain"))
+                            var timeScale = Time.timeScale;
+                            GUILayout.Label($"Time.timeScale : {timeScale}");
+                            var newTimeScale = GUILayout.HorizontalSlider(timeScale, 0, 10);
+                            GUILayout.Space(15);
+                            if (!Mathf.Approximately(timeScale, newTimeScale))
                             {
-                                ReloadDomain();
+                                Time.timeScale = newTimeScale;
                             }
 
-                            if (GUILayout.Button("Reload Scene"))
+                            using (new GUILayout.HorizontalScope())
                             {
-                                ReloadScene();
+                                if (GUILayout.Button("-1"))
+                                {
+                                    Time.timeScale = Mathf.Max(timeScale - 1f, 0f);
+                                }
+
+                                if (GUILayout.Button("-0.1"))
+                                {
+                                    Time.timeScale = Mathf.Max(timeScale - 0.1f, 0f);
+                                }
+
+                                if (GUILayout.Button("=1"))
+                                {
+                                    Time.timeScale = 1f;
+                                }
+
+                                if (GUILayout.Button("+0.1"))
+                                {
+                                    Time.timeScale = Mathf.Min(timeScale + 0.1f, 10f);
+                                }
+
+                                if (GUILayout.Button("+1"))
+                                {
+                                    Time.timeScale = Mathf.Min(timeScale + 1f, 10f);
+                                }
                             }
                         }
                     }
-#endif
-                }
-            });
-#if UNITY_EDITOR
-            _sceneAssetTree = new SceneAssetTree(_scenePathPrefix);
-            foreach (var scene in EditorBuildSettings.scenes)
-            {
-                _sceneAssetTree.Add(scene);
+                });
             }
 
-            yield return ("シーン一覧", () =>
+            if (_enableReload)
             {
-                using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
+                yield return ("リロード", () =>
                 {
-                    _sceneAssetTree.OnGUI();
+                    using (new GUILayout.VerticalScope())
+                    {
+                        using (new MornDebugGUILayout.EnableScope(Application.isPlaying))
+                        {
+                            if (GUILayout.Button("現在のシーンを読み込み直す"))
+                            {
+                                var scene = SceneManager.GetActiveScene();
+                                SceneManager.LoadScene(scene.name, LoadSceneMode.Single);
+                            }
+                        }
+#if UNITY_EDITOR
+                        using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
+                        {
+                            using (new GUILayout.HorizontalScope())
+                            {
+                                if (GUILayout.Button("Reload Domain"))
+                                {
+                                    ReloadDomain();
+                                }
+
+                                if (GUILayout.Button("Reload Scene"))
+                                {
+                                    ReloadScene();
+                                }
+                            }
+                        }
+#endif
+                    }
+                });
+            }
+
+#if UNITY_EDITOR
+            if (_enableSceneList)
+            {
+                _sceneAssetTree = new SceneAssetTree(_scenePathPrefix);
+                foreach (var scene in EditorBuildSettings.scenes)
+                {
+                    _sceneAssetTree.Add(scene);
                 }
-            });
+
+                yield return ("シーン一覧", () =>
+                {
+                    using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
+                    {
+                        _sceneAssetTree.OnGUI();
+                    }
+                });
+            }
 #endif
         }
 
