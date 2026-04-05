@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,9 +10,9 @@ namespace MornLib
         private string _currentPath;
         private readonly List<string> _groups = new();
         private readonly HashSet<string> _folderHash = new();
-        private readonly List<(string, Action)> _endpoints = new();
+        private readonly List<MornDebugEntry> _endpoints = new();
 
-        public void OnGUI(IEnumerable<(string, Action)> pairs)
+        public void OnGUI(List<MornDebugEntry> entries)
         {
             if (_headerStyle == null)
             {
@@ -32,7 +31,7 @@ namespace MornLib
                     _currentPath = string.Empty;
                 }
 
-                DrawTree(pairs);
+                DrawTree(entries);
             }
         }
 
@@ -68,24 +67,22 @@ namespace MornLib
             }
         }
 
-        private void DrawTree(IEnumerable<(string, Action)> pairs)
+        private void DrawTree(List<MornDebugEntry> entries)
         {
             _groups.Clear();
             _folderHash.Clear();
             _endpoints.Clear();
-            foreach (var (key, action) in pairs)
+            foreach (var entry in entries)
             {
-                if (string.IsNullOrEmpty(_currentPath) || key.StartsWith(_currentPath))
+                if (!string.IsNullOrEmpty(_currentPath) && !entry.Key.StartsWith(_currentPath)) continue;
+                var relativePath = entry.Key.Substring(_currentPath.Length);
+                if (relativePath.Contains('/'))
                 {
-                    var relativePath = key.Substring(_currentPath.Length);
-                    if (relativePath.Contains('/'))
-                    {
-                        _groups.Add(relativePath);
-                    }
-                    else
-                    {
-                        _endpoints.Add((relativePath, action));
-                    }
+                    _groups.Add(relativePath);
+                }
+                else
+                {
+                    _endpoints.Add(entry);
                 }
             }
 
@@ -108,12 +105,13 @@ namespace MornLib
                 }
             }
 
-            foreach (var (relativePath, action) in _endpoints)
+            foreach (var entry in _endpoints)
             {
-                GUILayout.Label(relativePath, _headerStyle);
+                var label = entry.Key.Substring(_currentPath.Length);
+                GUILayout.Label(label, _headerStyle);
                 using (new GUILayout.VerticalScope(GUI.skin.box))
                 {
-                    action?.Invoke();
+                    entry.Invoke();
                 }
             }
         }

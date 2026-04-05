@@ -10,32 +10,9 @@ namespace MornLib
     public static class MornDebugCore
     {
         private static int _updateFrameCount;
-        private static readonly List<Entry> _entries = new();
+        private static readonly List<MornDebugEntry> _entries = new();
         private static readonly MornDebugOnGUIDrawer _windowDrawer = new();
         private static readonly MornDebugOnGUIDrawer _runtimeDrawer = new();
-
-        private sealed class Entry
-        {
-            public string Key;
-            public Action Action;
-            public CancellationToken Ct;
-            public bool Disposed;
-        }
-
-        private sealed class Registration : IDisposable
-        {
-            private readonly Entry _entry;
-
-            public Registration(Entry entry)
-            {
-                _entry = entry;
-            }
-
-            public void Dispose()
-            {
-                _entry.Disposed = true;
-            }
-        }
 
         static MornDebugCore()
         {
@@ -47,31 +24,11 @@ namespace MornLib
             }
         }
 
-        private static IEnumerable<(string, Action)> GetValues()
-        {
-            foreach (var entry in _entries)
-            {
-                var e = entry;
-                yield return (e.Key, () =>
-                {
-                    try
-                    {
-                        e.Action?.Invoke();
-                    }
-                    catch (Exception ex)
-                    {
-                        MornDebugGlobal.Logger.LogError($"{e.Key} でエラーが発生したため自動破棄します: {ex}");
-                        e.Disposed = true;
-                    }
-                });
-            }
-        }
-
-        private static void CheckCancellation()
+        private static void Cleanup()
         {
             for (var i = _entries.Count - 1; i >= 0; i--)
             {
-                if (_entries[i].Disposed || _entries[i].Ct.IsCancellationRequested)
+                if (_entries[i].IsInvalid)
                 {
                     _entries.RemoveAt(i);
                 }
@@ -80,11 +37,7 @@ namespace MornLib
 
         internal static void OnUpdate()
         {
-            if (Time.frameCount == _updateFrameCount)
-            {
-                return;
-            }
-
+            if (Time.frameCount == _updateFrameCount) return;
             _updateFrameCount = Time.frameCount;
             var menus = MornDebugGlobal.I?.Menus;
             if (menus == null) return;
@@ -96,15 +49,9 @@ namespace MornLib
 
         internal static void OnGUI(bool isWindow)
         {
-            CheckCancellation();
-            if (isWindow)
-            {
-                _windowDrawer.OnGUI(GetValues());
-            }
-            else
-            {
-                _runtimeDrawer.OnGUI(GetValues());
-            }
+            Cleanup();
+            var drawer = isWindow ? _windowDrawer : _runtimeDrawer;
+            drawer.OnGUI(_entries);
         }
 
         /// <summary>
@@ -112,10 +59,10 @@ namespace MornLib
         /// </summary>
         public static IDisposable RegisterGUI(string key, Action action, CancellationToken ct)
         {
-            var entry = new Entry { Key = key, Action = action, Ct = ct };
+            var entry = new MornDebugEntry(key, action, ct);
             _entries.Add(entry);
             _entries.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
-            return new Registration(entry);
+            return entry;
         }
 
         /// <summary>
@@ -139,10 +86,7 @@ namespace MornLib
         /// </summary>
         public static IDisposable RegisterGUI(string key, Action action)
         {
-            var entry = new Entry { Key = key, Action = action, Ct = CancellationToken.None };
-            _entries.Add(entry);
-            _entries.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
-            return new Registration(entry);
+            return RegisterGUI(key, action, CancellationToken.None);
         }
     }
 }
