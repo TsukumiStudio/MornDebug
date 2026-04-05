@@ -89,43 +89,42 @@ namespace MornLib
                         return;
                     }
 
-                    using (new MornDebugGUILayout.EnableScope(Application.isPlaying))
+                    foreach (var param in _exposedParams)
                     {
-                        if (!Application.isPlaying)
-                        {
-                            GUILayout.Label("※ 再生中のみ操作できます");
-                        }
-
-                        foreach (var param in _exposedParams)
-                        {
-                            if (!_audioMixer.GetFloat(param, out var value)) continue;
-                            using (new GUILayout.HorizontalScope())
-                            {
-                                GUILayout.Label(param, GUILayout.Width(120));
-                                var newValue = GUILayout.HorizontalSlider(value, -80, 20);
-                                GUILayout.Label($"{value:F1} dB", GUILayout.Width(70));
-                                if (!Mathf.Approximately(value, newValue))
-                                {
-                                    _audioMixer.SetFloat(param, newValue);
-                                }
-                            }
-                        }
+                        _audioMixer.GetFloat(param, out var value);
+                        var overrideKey = $"{nameof(MornDebugBuiltinMenu)}_Override_{param}";
+                        var valueKey = $"{nameof(MornDebugBuiltinMenu)}_Value_{param}";
+                        var isOverride = PlayerPrefs.GetInt(overrideKey, 0) == 1;
 
                         using (new GUILayout.HorizontalScope())
                         {
-                            if (GUILayout.Button("全てミュート"))
+                            var newOverride = GUILayout.Toggle(isOverride, "", GUILayout.Width(20));
+                            if (newOverride != isOverride)
                             {
-                                foreach (var param in _exposedParams)
-                                {
-                                    _audioMixer.SetFloat(param, -80);
-                                }
+                                PlayerPrefs.SetInt(overrideKey, newOverride ? 1 : 0);
+                                PlayerPrefs.Save();
+                                isOverride = newOverride;
                             }
 
-                            if (GUILayout.Button("全てリセット(0dB)"))
+                            if (isOverride)
                             {
-                                foreach (var param in _exposedParams)
+                                var overrideValue = PlayerPrefs.GetFloat(valueKey, value);
+                                GUILayout.Label(param, GUILayout.Width(100));
+                                var newValue = GUILayout.HorizontalSlider(overrideValue, -80, 20);
+                                GUILayout.Label($"{overrideValue:F1} dB", GUILayout.Width(70));
+                                if (!Mathf.Approximately(overrideValue, newValue))
                                 {
-                                    _audioMixer.SetFloat(param, 0);
+                                    PlayerPrefs.SetFloat(valueKey, newValue);
+                                    PlayerPrefs.Save();
+                                }
+                            }
+                            else
+                            {
+                                using (new MornDebugGUILayout.EnableScope(false))
+                                {
+                                    GUILayout.Label(param, GUILayout.Width(100));
+                                    GUILayout.HorizontalSlider(value, -80, 20);
+                                    GUILayout.Label($"{value:F1} dB", GUILayout.Width(70));
                                 }
                             }
                         }
@@ -275,6 +274,20 @@ namespace MornLib
             }
 #endif
             _exposedParams = paramList.ToArray();
+        }
+
+        public override void OnUpdate()
+        {
+            if (_audioMixer == null || _exposedParams == null) return;
+            if (!Application.isPlaying) return;
+            foreach (var param in _exposedParams)
+            {
+                var overrideKey = $"{nameof(MornDebugBuiltinMenu)}_Override_{param}";
+                if (PlayerPrefs.GetInt(overrideKey, 0) != 1) continue;
+                var valueKey = $"{nameof(MornDebugBuiltinMenu)}_Value_{param}";
+                var value = PlayerPrefs.GetFloat(valueKey, 0);
+                _audioMixer.SetFloat(param, value);
+            }
         }
 
 #if UNITY_EDITOR
