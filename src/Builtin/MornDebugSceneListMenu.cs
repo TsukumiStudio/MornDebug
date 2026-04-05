@@ -27,12 +27,12 @@ namespace MornLib
         }
 
         [SerializeField] private string _menuKey = "シーン一覧";
-        [SerializeField] private DefaultAsset _sceneFolder;
+        [SerializeField] private DefaultAsset _rootSceneFolder;
         private SceneAssetTree _sceneAssetTree;
 
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
-            var prefix = _sceneFolder != null ? AssetDatabase.GetAssetPath(_sceneFolder) + "/" : "";
+            var prefix = _rootSceneFolder != null ? AssetDatabase.GetAssetPath(_rootSceneFolder) + "/" : "";
             _sceneAssetTree = new SceneAssetTree(prefix);
             foreach (var scene in EditorBuildSettings.scenes)
             {
