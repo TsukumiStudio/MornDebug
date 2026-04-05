@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace MornLib
@@ -9,10 +10,36 @@ namespace MornLib
     public static class MornDebugCore
     {
         private static int _updateFrameCount;
-        private static readonly List<string> _menuKeys = new();
-        private static readonly Dictionary<string, (Action, CancellationToken)> _menuItems = new();
+        private static int _nextId;
+        private static readonly List<Entry> _entries = new();
         private static readonly MornDebugOnGUIDrawer _windowDrawer = new();
         private static readonly MornDebugOnGUIDrawer _runtimeDrawer = new();
+
+        private sealed class Entry
+        {
+            public int Id;
+            public string Key;
+            public Action Action;
+            public CancellationToken Ct;
+        }
+
+        private sealed class Registration : IDisposable
+        {
+            private readonly int _id;
+            private bool _disposed;
+
+            public Registration(int id)
+            {
+                _id = id;
+            }
+
+            public void Dispose()
+            {
+                if (_disposed) return;
+                _disposed = true;
+                Unregister(_id);
+            }
+        }
 
         static MornDebugCore()
         {
@@ -26,36 +53,33 @@ namespace MornLib
 
         private static IEnumerable<(string, Action)> GetValues()
         {
-            foreach (var key in _menuKeys)
+            foreach (var entry in _entries)
             {
-                var pair = _menuItems[key];
-                yield return (key, pair.Item1);
+                yield return (entry.Key, entry.Action);
             }
         }
 
         private static void CheckCancellation()
         {
-            var cancelList = new List<string>();
-            foreach (var item in _menuItems)
+            for (var i = _entries.Count - 1; i >= 0; i--)
             {
-                var ct = item.Value.Item2;
-                if (ct.IsCancellationRequested)
+                if (_entries[i].Ct.IsCancellationRequested)
                 {
-                    cancelList.Add(item.Key);
+                    _entries.RemoveAt(i);
                 }
             }
+        }
 
-            foreach (var key in cancelList)
-            {
-                UnregisterGUI(key);
-            }
+        private static void Unregister(int id)
+        {
+            _entries.RemoveAll(e => e.Id == id);
         }
 
         internal static void OnUpdate()
         {
             if (Time.frameCount == _updateFrameCount)
             {
-                return; // 既に更新済み
+                return;
             }
 
             _updateFrameCount = Time.frameCount;
@@ -80,36 +104,43 @@ namespace MornLib
             }
         }
 
-
         /// <summary>
         /// デバッグメニューにGUI描画コールバックを登録する。
-        /// actionはOnGUI内で呼ばれるので、GUILayout.Button/Label等を使って自由にUI構築できる。
-        /// 例: RegisterGUI("チート/ポイント操作", () => { GUILayout.Label("現在: 100pt"); if(GUILayout.Button("+100")) ... }, ct);
+        /// 同じkeyで複数登録可能。戻り値のIDisposableをDisposeすると登録解除される。
         /// </summary>
-        public static void RegisterGUI(string key, Action action, CancellationToken ct = default)
+        public static IDisposable RegisterGUI(string key, Action action)
         {
-            CheckCancellation();
-            if (_menuItems.ContainsKey(key))
-            {
-                MornDebugGlobal.Logger.LogWarning($"キーが重複しているので登録処理をスキップします:{key}");
-                return;
-            }
-
-            _menuItems[key] = (action, ct);
-            _menuKeys.Add(key);
-            _menuKeys.Sort();
+            var id = _nextId++;
+            _entries.Add(new Entry { Id = id, Key = key, Action = action, Ct = default });
+            _entries.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
+            return new Registration(id);
         }
 
-        public static void UnregisterGUI(string key)
+        /// <summary>
+        /// CancellationTokenに連動して自動解除される登録。
+        /// </summary>
+        public static IDisposable RegisterGUI(string key, Action action, CancellationToken ct)
         {
-            if (!_menuItems.ContainsKey(key))
-            {
-                MornDebugGlobal.Logger.LogWarning($"キーが見つからないので削除処理をスキップします:{key}");
-                return;
-            }
+            var id = _nextId++;
+            _entries.Add(new Entry { Id = id, Key = key, Action = action, Ct = ct });
+            _entries.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
+            return new Registration(id);
+        }
 
-            _menuItems.Remove(key);
-            _menuKeys.Remove(key);
+        /// <summary>
+        /// GameObjectのライフサイクルに連動して自動解除される登録。
+        /// </summary>
+        public static IDisposable RegisterGUI(string key, Action action, GameObject gameObject)
+        {
+            return RegisterGUI(key, action, gameObject.GetCancellationTokenOnDestroy());
+        }
+
+        /// <summary>
+        /// MonoBehaviourのライフサイクルに連動して自動解除される登録。
+        /// </summary>
+        public static IDisposable RegisterGUI(string key, Action action, MonoBehaviour monoBehaviour)
+        {
+            return RegisterGUI(key, action, monoBehaviour.destroyCancellationToken);
         }
     }
 }
