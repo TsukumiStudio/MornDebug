@@ -10,34 +10,30 @@ namespace MornLib
     public static class MornDebugCore
     {
         private static int _updateFrameCount;
-        private static int _nextId;
         private static readonly List<Entry> _entries = new();
         private static readonly MornDebugOnGUIDrawer _windowDrawer = new();
         private static readonly MornDebugOnGUIDrawer _runtimeDrawer = new();
 
         private sealed class Entry
         {
-            public int Id;
             public string Key;
             public Action Action;
             public CancellationToken Ct;
+            public bool Disposed;
         }
 
         private sealed class Registration : IDisposable
         {
-            private readonly int _id;
-            private bool _disposed;
+            private readonly Entry _entry;
 
-            public Registration(int id)
+            public Registration(Entry entry)
             {
-                _id = id;
+                _entry = entry;
             }
 
             public void Dispose()
             {
-                if (_disposed) return;
-                _disposed = true;
-                Unregister(_id);
+                _entry.Disposed = true;
             }
         }
 
@@ -47,7 +43,7 @@ namespace MornLib
             if (menus == null) return;
             foreach (var (key, action) in menus.Where(x => x != null).SelectMany(x => x.GetMenuItems()))
             {
-                RegisterGUI(key, action);
+                RegisterGUI(key, action, CancellationToken.None);
             }
         }
 
@@ -63,16 +59,11 @@ namespace MornLib
         {
             for (var i = _entries.Count - 1; i >= 0; i--)
             {
-                if (_entries[i].Ct.IsCancellationRequested)
+                if (_entries[i].Disposed || _entries[i].Ct.IsCancellationRequested)
                 {
                     _entries.RemoveAt(i);
                 }
             }
-        }
-
-        private static void Unregister(int id)
-        {
-            _entries.RemoveAll(e => e.Id == id);
         }
 
         internal static void OnUpdate()
@@ -105,42 +96,39 @@ namespace MornLib
         }
 
         /// <summary>
-        /// デバッグメニューにGUI描画コールバックを登録する。
-        /// 同じkeyで複数登録可能。戻り値のIDisposableをDisposeすると登録解除される。
+        /// CancellationTokenに連動して自動解除される登録。同じkeyで複数登録可能。
         /// </summary>
-        public static IDisposable RegisterGUI(string key, Action action)
+        public static void RegisterGUI(string key, Action action, CancellationToken ct)
         {
-            var id = _nextId++;
-            _entries.Add(new Entry { Id = id, Key = key, Action = action, Ct = default });
+            _entries.Add(new Entry { Key = key, Action = action, Ct = ct });
             _entries.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
-            return new Registration(id);
-        }
-
-        /// <summary>
-        /// CancellationTokenに連動して自動解除される登録。
-        /// </summary>
-        public static IDisposable RegisterGUI(string key, Action action, CancellationToken ct)
-        {
-            var id = _nextId++;
-            _entries.Add(new Entry { Id = id, Key = key, Action = action, Ct = ct });
-            _entries.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
-            return new Registration(id);
         }
 
         /// <summary>
         /// GameObjectのライフサイクルに連動して自動解除される登録。
         /// </summary>
-        public static IDisposable RegisterGUI(string key, Action action, GameObject gameObject)
+        public static void RegisterGUI(string key, Action action, GameObject gameObject)
         {
-            return RegisterGUI(key, action, gameObject.GetCancellationTokenOnDestroy());
+            RegisterGUI(key, action, gameObject.GetCancellationTokenOnDestroy());
         }
 
         /// <summary>
         /// MonoBehaviourのライフサイクルに連動して自動解除される登録。
         /// </summary>
-        public static IDisposable RegisterGUI(string key, Action action, MonoBehaviour monoBehaviour)
+        public static void RegisterGUI(string key, Action action, MonoBehaviour monoBehaviour)
         {
-            return RegisterGUI(key, action, monoBehaviour.destroyCancellationToken);
+            RegisterGUI(key, action, monoBehaviour.destroyCancellationToken);
+        }
+
+        /// <summary>
+        /// 戻り値のIDisposableをDisposeすると登録解除される。任意タイミングで解除可能。
+        /// </summary>
+        public static IDisposable RegisterGUI(string key, Action action)
+        {
+            var entry = new Entry { Key = key, Action = action, Ct = CancellationToken.None };
+            _entries.Add(entry);
+            _entries.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
+            return new Registration(entry);
         }
     }
 }
