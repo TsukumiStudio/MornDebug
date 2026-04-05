@@ -113,7 +113,14 @@ namespace MornLib
                 GUILayout.Label(relativePath, _headerStyle);
                 using (new GUILayout.VerticalScope(GUI.skin.box))
                 {
-                    action?.Invoke();
+                    try
+                    {
+                        action?.Invoke();
+                    }
+                    catch (Exception e)
+                    {
+                        MornDebugGlobal.Logger.LogError(e);
+                    }
                 }
             }
         }
