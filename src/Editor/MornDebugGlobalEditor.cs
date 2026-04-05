@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -8,14 +9,16 @@ namespace MornLib
     [CustomEditor(typeof(MornDebugGlobal))]
     internal sealed class MornDebugGlobalEditor : Editor
     {
-        private static readonly (string label, Type type)[] BuiltinMenuTypes =
+        private List<Type> _menuTypes;
+
+        private void OnEnable()
         {
-            ("セーブ", typeof(MornDebugSaveMenu)),
-            ("サウンド", typeof(MornDebugSoundMenu)),
-            ("時間操作", typeof(MornDebugTimeScaleMenu)),
-            ("リロード", typeof(MornDebugReloadMenu)),
-            ("シーン一覧", typeof(MornDebugSceneListMenu)),
-        };
+            _menuTypes = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .Where(t => t.IsSubclassOf(typeof(MornDebugMenuBase)) && !t.IsAbstract)
+                .OrderBy(t => t.Name)
+                .ToList();
+        }
 
         public override void OnInspectorGUI()
         {
@@ -32,28 +35,23 @@ namespace MornLib
             var menus = global.Menus;
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("ビルトインメニュー", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("メニュー追加", EditorStyles.boldLabel);
 
-            var anyCreated = false;
-            foreach (var (label, type) in BuiltinMenuTypes)
+            var hasMissing = false;
+            foreach (var type in _menuTypes)
             {
                 var exists = menus != null && menus.Any(m => m != null && m.GetType() == type);
                 if (exists) continue;
-
-                if (GUILayout.Button($"{label}（{type.Name}）を作成して登録"))
+                hasMissing = true;
+                if (GUILayout.Button($"{type.Name} を作成して登録"))
                 {
                     CreateAndRegister(global, type);
-                    anyCreated = true;
                 }
             }
 
-            if (!anyCreated)
+            if (!hasMissing)
             {
-                var allExists = BuiltinMenuTypes.All(t => menus != null && menus.Any(m => m != null && m.GetType() == t.type));
-                if (allExists)
-                {
-                    EditorGUILayout.HelpBox("全てのビルトインメニューが登録済みです。", MessageType.Info);
-                }
+                EditorGUILayout.HelpBox("全てのメニューが登録済みです。", MessageType.Info);
             }
         }
 
