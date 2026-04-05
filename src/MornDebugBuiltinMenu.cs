@@ -89,33 +89,41 @@ namespace MornLib
                         return;
                     }
 
-                    foreach (var param in _exposedParams)
+                    using (new MornDebugGUILayout.EnableScope(Application.isPlaying))
                     {
-                        if (!_audioMixer.GetFloat(param, out var value)) continue;
-                        GUILayout.Label($"{param}: {value:F1} dB");
-                        var newValue = GUILayout.HorizontalSlider(value, -80, 20);
-                        GUILayout.Space(10);
-                        if (!Mathf.Approximately(value, newValue))
+                        if (!Application.isPlaying)
                         {
-                            _audioMixer.SetFloat(param, newValue);
+                            GUILayout.Label("※ 再生中のみ操作できます");
                         }
-                    }
 
-                    using (new GUILayout.HorizontalScope())
-                    {
-                        if (GUILayout.Button("全てミュート"))
+                        foreach (var param in _exposedParams)
                         {
-                            foreach (var param in _exposedParams)
+                            if (!_audioMixer.GetFloat(param, out var value)) continue;
+                            GUILayout.Label($"{param}: {value:F1} dB");
+                            var newValue = GUILayout.HorizontalSlider(value, -80, 20);
+                            GUILayout.Space(10);
+                            if (!Mathf.Approximately(value, newValue))
                             {
-                                _audioMixer.SetFloat(param, -80);
+                                _audioMixer.SetFloat(param, newValue);
                             }
                         }
 
-                        if (GUILayout.Button("全てリセット(0dB)"))
+                        using (new GUILayout.HorizontalScope())
                         {
-                            foreach (var param in _exposedParams)
+                            if (GUILayout.Button("全てミュート"))
                             {
-                                _audioMixer.SetFloat(param, 0);
+                                foreach (var param in _exposedParams)
+                                {
+                                    _audioMixer.SetFloat(param, -80);
+                                }
+                            }
+
+                            if (GUILayout.Button("全てリセット(0dB)"))
+                            {
+                                foreach (var param in _exposedParams)
+                                {
+                                    _audioMixer.SetFloat(param, 0);
+                                }
                             }
                         }
                     }
