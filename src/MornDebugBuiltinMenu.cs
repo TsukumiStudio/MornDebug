@@ -43,6 +43,7 @@ namespace MornLib
         [SerializeField] private bool _enableSound = true;
         [SerializeField] private AudioMixer _audioMixer;
         private string[] _exposedParams;
+        private AudioMixer _cachedMixer;
 
         [Header("チート")]
         [SerializeField] private bool _enableTimeScale = true;
@@ -77,7 +78,7 @@ namespace MornLib
                     }
 
                     GUILayout.Label($"Mixer: {_audioMixer.name}");
-                    if (_exposedParams == null)
+                    if (_exposedParams == null || _cachedMixer != _audioMixer)
                     {
                         CacheExposedParams();
                     }
@@ -228,19 +229,36 @@ namespace MornLib
 
         private void CacheExposedParams()
         {
+            _cachedMixer = _audioMixer;
             var paramList = new List<string>();
 #if UNITY_EDITOR
-            var so = new SerializedObject(_audioMixer);
-            var exposedParams = so.FindProperty("m_ExposedParameters");
-            if (exposedParams != null)
+            if (_audioMixer != null)
             {
-                for (var i = 0; i < exposedParams.arraySize; i++)
+                var so = new SerializedObject(_audioMixer);
+                var prop = so.FindProperty("m_ExposedParameters");
+                if (prop != null && prop.isArray)
                 {
-                    var param = exposedParams.GetArrayElementAtIndex(i);
-                    var name = param.FindPropertyRelative("name")?.stringValue;
-                    if (!string.IsNullOrEmpty(name))
+                    for (var i = 0; i < prop.arraySize; i++)
                     {
-                        paramList.Add(name);
+                        var name = prop.GetArrayElementAtIndex(i).FindPropertyRelative("name")?.stringValue;
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            paramList.Add(name);
+                        }
+                    }
+                }
+
+                // フォールバック: exposedParametersが見つからない場合、既知のパラメータ名を試行
+                if (paramList.Count == 0)
+                {
+                    var groupsProp = so.FindProperty("m_MasterGroup");
+                    var iter = so.GetIterator();
+                    while (iter.NextVisible(true))
+                    {
+                        if (iter.name == "m_ExposedParameters" || iter.propertyPath.Contains("ExposedParameter"))
+                        {
+                            MornDebugGlobal.Logger.Log($"Found property: {iter.propertyPath} type={iter.propertyType}");
+                        }
                     }
                 }
             }
