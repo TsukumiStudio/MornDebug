@@ -7,7 +7,7 @@ namespace MornLib
     [CreateAssetMenu(fileName = nameof(MornDebugTimeScaleMenu), menuName = "Morn/Debug/" + nameof(MornDebugTimeScaleMenu))]
     public sealed class MornDebugTimeScaleMenu : MornDebugMenuBase
     {
-        [SerializeField] private string _menuKey = "チート/時間操作";
+        [SerializeField] private string _menuKey = "時間操作";
 
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
