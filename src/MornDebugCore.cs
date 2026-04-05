@@ -51,7 +51,19 @@ namespace MornLib
         {
             foreach (var entry in _entries)
             {
-                yield return (entry.Key, entry.Action);
+                var e = entry;
+                yield return (e.Key, () =>
+                {
+                    try
+                    {
+                        e.Action?.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        MornDebugGlobal.Logger.LogError($"{e.Key} でエラーが発生したため自動破棄します: {ex}");
+                        e.Disposed = true;
+                    }
+                });
             }
         }
 
