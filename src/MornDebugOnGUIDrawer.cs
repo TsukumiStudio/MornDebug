@@ -39,31 +39,33 @@ namespace MornLib
         {
             using (new GUILayout.HorizontalScope())
             {
-                var canBack = !string.IsNullOrEmpty(_currentPath) && _currentPath.Length > 0;
-                var cachedEnabled = GUI.enabled;
-                GUI.enabled = canBack;
-                if (GUILayout.Button("Root", GUILayout.Width(50)))
+                var canBack = !string.IsNullOrEmpty(_currentPath);
+                using (new MornDebugGUILayout.EnableScope(canBack))
                 {
-                    _currentPath = string.Empty;
-                }
-
-                if (GUILayout.Button("Back", GUILayout.Width(50)))
-                {
-                    var index = _currentPath.LastIndexOf('/');
-                    if (index > 0)
-                    {
-                        var nextIndex = _currentPath.LastIndexOf('/', index - 1);
-                        _currentPath = nextIndex > 0 ? _currentPath[..nextIndex] : string.Empty;
-                    }
-                    else
+                    if (GUILayout.Button("Root", GUILayout.Width(50)))
                     {
                         _currentPath = string.Empty;
                     }
+
+                    if (GUILayout.Button("Back", GUILayout.Width(50)))
+                    {
+                        var index = _currentPath.LastIndexOf('/');
+                        if (index > 0)
+                        {
+                            var nextIndex = _currentPath.LastIndexOf('/', index - 1);
+                            _currentPath = nextIndex > 0 ? _currentPath[..nextIndex] : string.Empty;
+                        }
+                        else
+                        {
+                            _currentPath = string.Empty;
+                        }
+                    }
                 }
 
-                GUI.enabled = false;
-                _currentPath = GUILayout.TextField(_currentPath);
-                GUI.enabled = cachedEnabled;
+                using (new MornDebugGUILayout.EnableScope(false))
+                {
+                    _currentPath = GUILayout.TextField(_currentPath);
+                }
             }
         }
 

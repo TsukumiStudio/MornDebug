@@ -269,19 +269,6 @@ namespace MornLib
                     }
                 }
 
-                // フォールバック: exposedParametersが見つからない場合、既知のパラメータ名を試行
-                if (paramList.Count == 0)
-                {
-                    var groupsProp = so.FindProperty("m_MasterGroup");
-                    var iter = so.GetIterator();
-                    while (iter.NextVisible(true))
-                    {
-                        if (iter.name == "m_ExposedParameters" || iter.propertyPath.Contains("ExposedParameter"))
-                        {
-                            MornDebugGlobal.Logger.Log($"Found property: {iter.propertyPath} type={iter.propertyType}");
-                        }
-                    }
-                }
             }
 #endif
             _exposedParams = paramList.ToArray();

@@ -4,8 +4,6 @@ namespace MornLib
 {
     public sealed class MornDebugUI : MonoBehaviour
     {
-        [SerializeField] private RectTransform _rectTransform;
-
         public void Show()
         {
             gameObject.SetActive(true);
@@ -23,17 +21,13 @@ namespace MornLib
 
         private void OnGUI()
         {
-            if (_rectTransform == null)
-            {
-                return;
-            }
+            if (!gameObject.activeSelf) return;
 
             const int padding = 40;
             GUILayout.BeginArea(
                 new Rect(padding, padding, Screen.width - padding * 2, Screen.height - padding * 2),
                 style: "box");
 
-            // 右詰めで閉じるボタン
             using (new GUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
@@ -42,8 +36,7 @@ namespace MornLib
                     Hide();
                 }
             }
-            
-            // デバッグ情報の表示
+
             MornDebugCore.OnGUI(false);
 
             GUILayout.EndArea();
