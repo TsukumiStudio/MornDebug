@@ -110,8 +110,19 @@ namespace MornLib
                             {
                                 var overrideValue = PlayerPrefs.GetFloat(valueKey, value);
                                 GUILayout.Label(param, GUILayout.Width(100));
-                                var newValue = GUILayout.HorizontalSlider(overrideValue, -80, 20);
-                                GUILayout.Label($"{overrideValue:F1} dB", GUILayout.Width(70));
+                                var sliderValue = GUILayout.HorizontalSlider(overrideValue, -80, 20);
+                                var inputText = GUILayout.TextField($"{overrideValue:F1}", GUILayout.Width(50));
+                                GUILayout.Label("dB", GUILayout.Width(20));
+                                var newValue = overrideValue;
+                                if (!Mathf.Approximately(overrideValue, sliderValue))
+                                {
+                                    newValue = sliderValue;
+                                }
+                                else if (float.TryParse(inputText, out var parsed) && !Mathf.Approximately(overrideValue, parsed))
+                                {
+                                    newValue = Mathf.Clamp(parsed, -80, 20);
+                                }
+
                                 if (!Mathf.Approximately(overrideValue, newValue))
                                 {
                                     PlayerPrefs.SetFloat(valueKey, newValue);
