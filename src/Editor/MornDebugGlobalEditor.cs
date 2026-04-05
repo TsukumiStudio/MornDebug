@@ -1,5 +1,3 @@
-#if UNITY_EDITOR
-using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -12,7 +10,6 @@ namespace MornLib
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-
             EditorGUILayout.Space();
             EditorGUILayout.HelpBox("Menusの変更はDomain Reload後に反映されます。すぐに反映したい場合は下のボタンを押してください。", MessageType.Info);
             if (GUILayout.Button("Reload Domain"))
@@ -23,7 +20,6 @@ namespace MornLib
             var global = (MornDebugGlobal)target;
             var menus = global.Menus;
             if (menus != null && menus.OfType<MornDebugBuiltinMenu>().Any()) return;
-
             EditorGUILayout.Space();
             EditorGUILayout.HelpBox("MornDebugBuiltinMenuが未登録です。", MessageType.Info);
             if (GUILayout.Button("MornDebugBuiltinMenuを作成して登録"))
@@ -34,7 +30,6 @@ namespace MornLib
                 path = AssetDatabase.GenerateUniqueAssetPath(path);
                 var menu = CreateInstance<MornDebugBuiltinMenu>();
                 AssetDatabase.CreateAsset(menu, path);
-
                 var so = serializedObject;
                 var prop = so.FindProperty("_menus");
                 prop.arraySize++;
@@ -46,4 +41,3 @@ namespace MornLib
         }
     }
 }
-#endif

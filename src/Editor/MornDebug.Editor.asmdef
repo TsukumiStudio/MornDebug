@@ -1,0 +1,19 @@
+{
+    "name": "MornDebug.Editor",
+    "rootNamespace": "MornLib",
+    "references": [
+        "GUID:dadc2fee866e04157b6aa9c8ff475e67",
+        "GUID:9fb3b15b1474476cbe64c6bd63468fb6"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
