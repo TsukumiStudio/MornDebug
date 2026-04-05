@@ -98,26 +98,28 @@ namespace MornLib
         /// <summary>
         /// CancellationTokenに連動して自動解除される登録。同じkeyで複数登録可能。
         /// </summary>
-        public static void RegisterGUI(string key, Action action, CancellationToken ct)
+        public static IDisposable RegisterGUI(string key, Action action, CancellationToken ct)
         {
-            _entries.Add(new Entry { Key = key, Action = action, Ct = ct });
+            var entry = new Entry { Key = key, Action = action, Ct = ct };
+            _entries.Add(entry);
             _entries.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
+            return new Registration(entry);
         }
 
         /// <summary>
         /// GameObjectのライフサイクルに連動して自動解除される登録。
         /// </summary>
-        public static void RegisterGUI(string key, Action action, GameObject gameObject)
+        public static IDisposable RegisterGUI(string key, Action action, GameObject gameObject)
         {
-            RegisterGUI(key, action, gameObject.GetCancellationTokenOnDestroy());
+            return RegisterGUI(key, action, gameObject.GetCancellationTokenOnDestroy());
         }
 
         /// <summary>
         /// MonoBehaviourのライフサイクルに連動して自動解除される登録。
         /// </summary>
-        public static void RegisterGUI(string key, Action action, MonoBehaviour monoBehaviour)
+        public static IDisposable RegisterGUI(string key, Action action, MonoBehaviour monoBehaviour)
         {
-            RegisterGUI(key, action, monoBehaviour.destroyCancellationToken);
+            return RegisterGUI(key, action, monoBehaviour.destroyCancellationToken);
         }
 
         /// <summary>
