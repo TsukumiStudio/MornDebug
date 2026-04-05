@@ -99,12 +99,15 @@ namespace MornLib
                         foreach (var param in _exposedParams)
                         {
                             if (!_audioMixer.GetFloat(param, out var value)) continue;
-                            GUILayout.Label($"{param}: {value:F1} dB");
-                            var newValue = GUILayout.HorizontalSlider(value, -80, 20);
-                            GUILayout.Space(15);
-                            if (!Mathf.Approximately(value, newValue))
+                            using (new GUILayout.HorizontalScope())
                             {
-                                _audioMixer.SetFloat(param, newValue);
+                                GUILayout.Label(param, GUILayout.Width(120));
+                                var newValue = GUILayout.HorizontalSlider(value, -80, 20);
+                                GUILayout.Label($"{value:F1} dB", GUILayout.Width(70));
+                                if (!Mathf.Approximately(value, newValue))
+                                {
+                                    _audioMixer.SetFloat(param, newValue);
+                                }
                             }
                         }
 
