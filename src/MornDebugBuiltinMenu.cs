@@ -101,7 +101,7 @@ namespace MornLib
                             if (!_audioMixer.GetFloat(param, out var value)) continue;
                             GUILayout.Label($"{param}: {value:F1} dB");
                             var newValue = GUILayout.HorizontalSlider(value, -80, 20);
-                            GUILayout.Space(10);
+                            GUILayout.Space(15);
                             if (!Mathf.Approximately(value, newValue))
                             {
                                 _audioMixer.SetFloat(param, newValue);
