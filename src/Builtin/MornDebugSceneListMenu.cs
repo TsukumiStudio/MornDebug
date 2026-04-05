@@ -26,6 +26,7 @@ namespace MornLib
             }
         }
 
+        [SerializeField] private string _menuKey = "シーン一覧";
         [SerializeField] private DefaultAsset _sceneFolder;
         private SceneAssetTree _sceneAssetTree;
 
@@ -38,7 +39,7 @@ namespace MornLib
                 _sceneAssetTree.Add(scene);
             }
 
-            yield return ("シーン一覧", () =>
+            yield return (_menuKey, () =>
             {
                 using (new MornDebugGUILayout.EnableScope(!Application.isPlaying))
                 {

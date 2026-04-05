@@ -7,9 +7,11 @@ namespace MornLib
     [CreateAssetMenu(fileName = nameof(MornDebugTimeScaleMenu), menuName = "Morn/Debug/" + nameof(MornDebugTimeScaleMenu))]
     public sealed class MornDebugTimeScaleMenu : MornDebugMenuBase
     {
+        [SerializeField] private string _menuKey = "チート/時間操作";
+
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
-            yield return ("チート/時間操作", () =>
+            yield return (_menuKey, () =>
             {
                 using (new MornDebugGUILayout.EnableScope(Application.isPlaying))
                 {

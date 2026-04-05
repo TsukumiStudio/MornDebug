@@ -12,9 +12,11 @@ namespace MornLib
     [CreateAssetMenu(fileName = nameof(MornDebugReloadMenu), menuName = "Morn/Debug/" + nameof(MornDebugReloadMenu))]
     public sealed class MornDebugReloadMenu : MornDebugMenuBase
     {
+        [SerializeField] private string _menuKey = "リロード";
+
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
-            yield return ("リロード", () =>
+            yield return (_menuKey, () =>
             {
                 using (new GUILayout.VerticalScope())
                 {

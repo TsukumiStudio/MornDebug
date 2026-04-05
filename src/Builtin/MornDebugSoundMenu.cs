@@ -11,13 +11,14 @@ namespace MornLib
     [CreateAssetMenu(fileName = nameof(MornDebugSoundMenu), menuName = "Morn/Debug/" + nameof(MornDebugSoundMenu))]
     public sealed class MornDebugSoundMenu : MornDebugMenuBase
     {
+        [SerializeField] private string _menuKey = "サウンド";
         [SerializeField] private AudioMixer _audioMixer;
         private string[] _exposedParams;
         private AudioMixer _cachedMixer;
 
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
-            yield return ("サウンド", () =>
+            yield return (_menuKey, () =>
             {
                 if (_audioMixer == null)
                 {
