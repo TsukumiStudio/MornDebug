@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace MornLib
@@ -70,7 +69,12 @@ namespace MornLib
         /// </summary>
         public static IDisposable RegisterGUI(string key, Action action, GameObject gameObject)
         {
-            return RegisterGUI(key, action, gameObject.GetCancellationTokenOnDestroy());
+            if (!gameObject.TryGetComponent<MornDebugDestroyTrigger>(out var trigger))
+            {
+                trigger = gameObject.AddComponent<MornDebugDestroyTrigger>();
+            }
+
+            return RegisterGUI(key, action, trigger.CancellationToken);
         }
 
         /// <summary>
