@@ -13,8 +13,30 @@ namespace MornLib
     {
         [SerializeField] private string _menuKey = "サウンド";
         [SerializeField] private AudioMixer _audioMixer;
-        private string[] _exposedParams;
-        private AudioMixer _cachedMixer;
+
+        private static string[] GetExposedParams(AudioMixer mixer)
+        {
+            var paramList = new List<string>();
+#if UNITY_EDITOR
+            if (mixer != null)
+            {
+                var so = new SerializedObject(mixer);
+                var prop = so.FindProperty("m_ExposedParameters");
+                if (prop != null && prop.isArray)
+                {
+                    for (var i = 0; i < prop.arraySize; i++)
+                    {
+                        var name = prop.GetArrayElementAtIndex(i).FindPropertyRelative("name")?.stringValue;
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            paramList.Add(name);
+                        }
+                    }
+                }
+            }
+#endif
+            return paramList.ToArray();
+        }
 
         public override IEnumerable<(string key, Action action)> GetMenuItems()
         {
@@ -27,20 +49,17 @@ namespace MornLib
                 }
 
                 GUILayout.Label($"Mixer: {_audioMixer.name}");
-                if (_exposedParams == null || _cachedMixer != _audioMixer)
-                {
-                    CacheExposedParams();
-                }
+                var exposedParams = GetExposedParams(_audioMixer);
 
-                if (_exposedParams.Length == 0)
+                if (exposedParams.Length == 0)
                 {
                     GUILayout.Label("公開パラメータがありません。");
                     return;
                 }
 
-                foreach (var param in _exposedParams)
+                foreach (var param in exposedParams)
                 {
-                    _audioMixer.GetFloat(param, out var value);
+                    if (!_audioMixer.GetFloat(param, out var value)) continue;
                     var overrideKey = $"{nameof(MornDebugSoundMenu)}_Override_{param}";
                     var valueKey = $"{nameof(MornDebugSoundMenu)}_Value_{param}";
                     var isOverride = PlayerPrefs.GetInt(overrideKey, 0) == 1;
@@ -92,36 +111,12 @@ namespace MornLib
             });
         }
 
-        private void CacheExposedParams()
-        {
-            _cachedMixer = _audioMixer;
-            var paramList = new List<string>();
-#if UNITY_EDITOR
-            if (_audioMixer != null)
-            {
-                var so = new SerializedObject(_audioMixer);
-                var prop = so.FindProperty("m_ExposedParameters");
-                if (prop != null && prop.isArray)
-                {
-                    for (var i = 0; i < prop.arraySize; i++)
-                    {
-                        var name = prop.GetArrayElementAtIndex(i).FindPropertyRelative("name")?.stringValue;
-                        if (!string.IsNullOrEmpty(name))
-                        {
-                            paramList.Add(name);
-                        }
-                    }
-                }
-            }
-#endif
-            _exposedParams = paramList.ToArray();
-        }
-
         public override void OnUpdate()
         {
-            if (_audioMixer == null || _exposedParams == null) return;
+            if (_audioMixer == null) return;
             if (!Application.isPlaying) return;
-            foreach (var param in _exposedParams)
+            var exposedParams = GetExposedParams(_audioMixer);
+            foreach (var param in exposedParams)
             {
                 var overrideKey = $"{nameof(MornDebugSoundMenu)}_Override_{param}";
                 if (PlayerPrefs.GetInt(overrideKey, 0) != 1) continue;
