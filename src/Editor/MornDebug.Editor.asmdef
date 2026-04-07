@@ -1,13 +1,13 @@
 {
-    "name": "MornDebug",
+    "name": "MornDebug.Editor",
     "rootNamespace": "MornLib",
     "references": [
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:520891f70526d454fa74c098f96aaedd",
-        "GUID:9fb3b15b1474476cbe64c6bd63468fb6",
-        "GUID:4fec7dc6f4f634537a1d2d4164a3f6d3"
+        "GUID:dadc2fee866e04157b6aa9c8ff475e67",
+        "GUID:9fb3b15b1474476cbe64c6bd63468fb6"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
