@@ -1,53 +1,106 @@
 # MornDebug
 
+<p align="center">
+  <img src="src/Editor/MornDebug.png" alt="MornDebug" width="640" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/license/TsukumiStudio/MornDebug" alt="License" />
+</p>
+
 ## 概要
 
-ゲーム開発中に使用できるインゲーム・エディタ統合デバッグメニューUIフレームワーク。
+GUILayoutを用いたデバッグ機能を簡単に構築できる補助ツール。EditorWindow・ランタイムUIの両方に対応。
 
-## 依存関係
+## 導入方法
 
-| 種別 | 名前 |
-|------|------|
-| Mornライブラリ | MornLib, MornEditor, MornGlobal, MornProcess |
+Unity Package Manager で以下の Git URL を追加:
+
+```
+https://github.com/TsukumiStudio/MornDebug.git?path=src#1.0.0
+```
+
+`Window > Package Manager > + > Add package from git URL...` に貼り付けてください。
+
+### 依存パッケージ
+
+- [MornGlobal](https://github.com/TsukumiStudio/MornGlobal) (`com.tsukumistudio.mornglobal`)
+- [UniTask](https://github.com/Cysharp/UniTask) (`com.cysharp.unitask`)
 
 ## 使い方
 
-### カスタムメニューの作成
+### ScriptableObjectで登録
+
+`MornDebugMenuBase` を継承してメニューを定義し、`MornDebugGlobal` の Menus に登録する。
 
 ```csharp
-[CreateAssetMenu(menuName = "Morn/Debug/CustomMenu")]
+[CreateAssetMenu(menuName = "Morn/Debug/MyMenu")]
 public sealed class MyDebugMenu : MornDebugMenuBase
 {
-    public override IEnumerable<(string, Action)> GetMenuItems()
+    public override IEnumerable<(string key, Action action)> GetMenuItems()
     {
-        yield return ("カテゴリ/項目", () => {
-            GUILayout.Button("操作ボタン");
+        yield return ("カスタム/ボタン", () =>
+        {
+            if (GUILayout.Button("実行")) { /* 処理 */ }
         });
     }
 }
 ```
 
-### Runtime表示
+### CancellationToken で登録
+
+トークンがキャンセルされると自動で解除される。
 
 ```csharp
-MornDebugUI.Show(); // UI表示
-MornDebugUI.Hide(); // UI非表示
+MornDebugCore.RegisterGUI("FPS", () =>
+{
+    GUILayout.Label($"FPS: {1f / Time.deltaTime:F0}");
+}, destroyCancellationToken);
 ```
 
-### 動的な項目追加・削除
+### GameObject / MonoBehaviour で登録
+
+オブジェクトのDestroy時に自動で解除される。
 
 ```csharp
-MornDebugCore.RegisterGUI("キー", () => { /* 処理 */ });
-MornDebugCore.UnregisterGUI("キー");
+MornDebugCore.RegisterGUI("プレイヤー/HP", () =>
+{
+    GUILayout.Label($"HP: {_hp}");
+}, gameObject);
 ```
 
-### エディタウィンドウ
+### IDisposable で登録
 
-`Tools > MornDebugWindow` でエディタ上でもデバッグメニューを使用できます。
+任意のタイミングで手動解除できる。
 
-### 組み込みメニュー
+```csharp
+var registration = MornDebugCore.RegisterGUI("一時メニュー", () =>
+{
+    GUILayout.Label("一時的な情報");
+});
 
-- セーブマネージャ/データ削除
-- サウンド/音量スライダー
-- チート/時間操作
-- リロード/シーン再読み込み
+// 不要になったら解除
+registration.Dispose();
+```
+
+### ランタイムUIの表示
+
+```csharp
+MornDebugUI.Show();    // 表示
+MornDebugUI.Hide();    // 非表示
+MornDebugUI.Toggle();  // 切り替え
+```
+
+## ビルトインメニュー
+
+よく使うデバッグ項目をデフォルトで用意しています。`MornDebugGlobal` のInspectorから個別に作成・登録できます。
+
+- `MornDebugSaveMenu` — PlayerPrefsリセット
+- `MornDebugSoundMenu` — AudioMixerの公開パラメータ制御
+- `MornDebugTimeScaleMenu` — Time.timeScaleの調整
+- `MornDebugReloadMenu` — シーン再読み込み、Domain/Scene Reload
+- `MornDebugSceneListMenu` — BuildSettingsのシーンツリー表示（Editor専用）
+
+## ライセンス
+
+[The Unlicense](LICENSE)
