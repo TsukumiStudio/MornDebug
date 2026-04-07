@@ -77,6 +77,7 @@ namespace MornLib
             foreach (var entry in entries)
             {
                 if (!string.IsNullOrEmpty(_currentPath) && !entry.Key.StartsWith(_currentPath)) continue;
+                if (entry.Key.Length < _currentPath.Length) continue;
                 var relativePath = entry.Key.Substring(_currentPath.Length);
                 if (relativePath.Contains('/'))
                 {
@@ -109,7 +110,7 @@ namespace MornLib
 
             foreach (var entry in _endpoints)
             {
-                var label = entry.Key.Substring(_currentPath.Length);
+                var label = entry.Key.Length >= _currentPath.Length ? entry.Key.Substring(_currentPath.Length) : entry.Key;
                 GUILayout.Label(label, _headerStyle);
                 using (new GUILayout.VerticalScope(GUI.skin.box))
                 {
