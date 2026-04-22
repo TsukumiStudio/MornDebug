@@ -1,6 +1,6 @@
 {
   "name": "com.tsukumistudio.morndebug",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "displayName": "MornDebug",
   "description": "GUILayoutを用いたデバッグ機能を簡単に構築できる補助ツール。Editor・ランタイム両対応。",
   "unity": "6000.0",
