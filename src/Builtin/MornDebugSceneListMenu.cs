@@ -12,7 +12,9 @@ namespace MornLib
     {
         // フィールドは Editor / ランタイム で同一レイアウトにして、ビルド時のシリアライズレイアウト差分警告を避ける。
         // _rootSceneFolder は Editor では DefaultAsset をドロップする想定。型は UnityEngine.Object として保持する。
+#pragma warning disable CS0414
         [SerializeField] private string _menuKey = "シーン一覧";
+#pragma warning restore CS0414
         [SerializeField] private UnityEngine.Object _rootSceneFolder;
 
 #if UNITY_EDITOR
