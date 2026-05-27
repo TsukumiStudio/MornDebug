@@ -5,6 +5,7 @@ namespace MornLib
     public sealed class MornDebugUI : MonoBehaviour
     {
         private static MornDebugUI _instance;
+        private const float BackgroundAlpha = 0.9f;
 
         public static bool IsVisible => _instance != null && _instance.gameObject.activeSelf;
 
@@ -47,6 +48,7 @@ namespace MornLib
 
         private void OnGUI()
         {
+            DrawBackground();
             var global = MornDebugGlobal.I;
             var guiScale = global != null ? global.GUIScale : 2f;
             var padding = global != null ? global.Padding : 20;
@@ -71,6 +73,19 @@ namespace MornLib
 
             GUILayout.EndArea();
             GUI.matrix = cachedMatrix;
+        }
+
+        private static void DrawBackground()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            var cachedColor = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, BackgroundAlpha);
+            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+            GUI.color = cachedColor;
         }
     }
 }
