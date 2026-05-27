@@ -17,7 +17,7 @@ GUILayoutを用いたデバッグ機能を簡単に構築できる補助ツー�
 Unity Package Manager で以下の Git URL を追加:
 
 ```
-https://github.com/TsukumiStudio/MornDebug.git?path=src#1.0.4
+https://github.com/TsukumiStudio/MornDebug.git?path=src#1.0.5
 ```
 
 `Window > Package Manager > + > Add package from git URL...` に貼り付けてください。
